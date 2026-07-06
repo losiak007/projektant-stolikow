@@ -21,6 +21,10 @@ liczy pełną geometrię skoczni i parametry lotu — tak, żeby dało się świ
   iteracyjnie (Trailism: "speed loss to gravity").
 - **Blat = dystans lotu** przy prędkości projektowej (IMBA/mtbr: gap ≈ lot) — rider projektowy
   przyziemia stycznie tuż za knucklem, wolniejsi lądują płasko na blacie (po to jest stolik).
+  Lot liczony z wysokości lipy do poziomu blatu — **lipa wystaje nad stół** (parametr, domyślnie
+  0,2 m), co wydłuża lot względem rachunku "na płasko".
+- **Korekcja na rozstaw osi** (Trailism): efektywny kąt wybicia = cięciwa ostatniego rozstawu
+  osi najazdu — tylne koło opuszcza lipę później; przy rampie ≥ rozstaw poprawka znika.
 - **Zeskok prowadzony po paraboli lotu** (Trailism: "landing mimics and follows the parabolic
   flight path"): zaczyna się kątem lipy przy knucklu, stromieje jak trajektoria, wyokrąglony
   u podstawy (~3 g). **EFH** (equivalent fall height) liczone jako kontrola bezpieczeństwa:
@@ -37,6 +41,7 @@ liczy pełną geometrię skoczni i parametry lotu — tak, żeby dało się świ
 - [IMBA Canada — Building a Dirt Jump / Freeride Park](https://imbacanada.com/building-a-dirt-jump-or-freeride-park/)
 - [Lee Likes Bikes — Formulas for building jumps](https://www.leelikesbikes.com/formulas-for-building-jumps.html)
 - [mtbr — dirt jumps specs](https://www.mtbr.com/threads/dirt-jumps-specs.599573/) — realne wymiary lip wg poziomu
+- [Cutlaps Trajectory Calculator](https://www.cutlaps.com) — rowerowy kalkulator trajektorii; promienie najazdu: BMX 2,4–3,0 m, dirt 3,0–4,0 m, full-sus 4,0–6,1 m
 
 Metryka EFH (equivalent fall height) używana jako kontrola bezpieczeństwa lądowania — za Trailism
 (limit 1,5 m / 4,9 ft). Literatura narciarska (Hubbard/Levy/McNeil) świadomie pominięta jako źródło

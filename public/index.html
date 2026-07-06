@@ -273,6 +273,22 @@
           <input type="range" id="teq" min="0.2" max="0.35" step="0.01" value="0.25">
           <div class="slider-hint">Trailism/FIS: 0,25 s × prędkość na lipie; USTPC: 0,3 s — rower przestaje się „bujać” przed wybiciem</div>
         </div>
+        <div class="slider-row">
+          <div class="slider-head">
+            <label for="drop">Lipa ponad blatem</label>
+            <output id="drop-out">0.20<small>m</small></output>
+          </div>
+          <input type="range" id="drop" min="0" max="0.5" step="0.05" value="0.2">
+          <div class="slider-hint">lipa zwykle wystaje nad stół — obniżony blat wydłuża lot (lot liczony z wysokości lipy do poziomu blatu, nie „na płasko”)</div>
+        </div>
+        <div class="slider-row">
+          <div class="slider-head">
+            <label for="wb">Rozstaw osi roweru</label>
+            <output id="wb-out">1.20<small>m</small></output>
+          </div>
+          <input type="range" id="wb" min="1.0" max="1.3" step="0.05" value="1.2">
+          <div class="slider-hint">tylne koło opuszcza lipę później (Trailism) — efektywny kąt = cięciwa ostatniego rozstawu osi; przy rampie ≥ rozstaw poprawka znika</div>
+        </div>
       </details>
     </section>
 
@@ -292,6 +308,7 @@
         <div class="res geo"><div class="lbl">Długość stołu (blat)</div><div class="val" id="r-table"></div></div>
         <div class="res geo"><div class="lbl">Promień przejścia (wjazd → lipa)</div><div class="val" id="r-radius"></div></div>
         <div class="res geo"><div class="lbl">Długość zeskoku (w poziomie)</div><div class="val" id="r-landlen"></div></div>
+        <div class="res geo wide"><div class="lbl">Efektywny kąt wybicia (rozstaw osi)</div><div class="val" id="r-theff"></div></div>
         <div class="res geo wide"><div class="lbl">Ziemia do przerzucenia (na 1 m szerokości)</div><div class="val" id="r-vol"></div></div>
       </div>
     </section>
@@ -320,8 +337,10 @@
           <a href="https://www.mtbr.com/threads/dirt-jumps-specs.599573/" target="_blank">mtbr — dirt jump specs</a><br>
         Realne wymiary: beginner 3 ft / 30°, intermediate 4 ft / 45°, pro 6–7 ft / 60–70°; gap 8–12 ft;
         lądowanie szersze (i często wyższe) niż wybicie — blat ≈ dystans lotu.</li>
-      <li><a href="https://mtbtrailbuilding.com/calculators/jump-design" target="_blank">MTB Trail Building — kalkulator</a><br>
-        Model lotu: prędkość + kąt → dystans, wysokość, czas, kąt lądowania.</li>
+      <li><a href="https://mtbtrailbuilding.com/calculators/jump-design" target="_blank">MTB Trail Building — kalkulator</a> ·
+          <a href="https://www.cutlaps.com" target="_blank">Cutlaps Trajectory Calculator</a><br>
+        Rowerowe kalkulatory: czysta parabola (opór &lt; 2 % przy prędkościach MTB).
+        Cutlaps — promienie najazdu: BMX 2,4–3,0 m, dirt 3,0–4,0 m, full-sus 4,0–6,1 m.</li>
       <li>Metryka EFH (equivalent fall height — „z jakiej wysokości spadasz”)<br>
         Używana tu tylko jako kontrola bezpieczeństwa lądowania, za Trailism (limit 1,5 m).</li>
     </ul>
@@ -340,6 +359,7 @@
   const inputs = {
     speed: el("speed"), angle: el("angle"),
     glimit: el("glimit"), teq: el("teq"),
+    drop: el("drop"), wb: el("wb"),
   };
 
   const fmt = (x, d = 2) => x.toLocaleString("pl-PL", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -382,22 +402,22 @@
   }
 
   // Zeskok prowadzony po paraboli lotu (Trailism: "landing mimics and follows
-  // the parabolic flight path") — zaczyna się kątem θ przy knucklu, stromieje
-  // jak trajektoria i wyokrągla się łukiem u podstawy (limit ~3 g). Dzięki temu
-  // przyziemienie jest niemal styczne (EFH ≈ 0) w całym zakresie prędkości.
-  function buildLanding(v0, th, H, xk) {
-    const tanT = Math.tan(th);
-    const kq = G / (2 * v0 * v0 * Math.cos(th) ** 2);       // krzywizna paraboli lotu
-    const vLand = Math.sqrt(v0 * v0 + 2 * G * H);
+  // the parabolic flight path") — zaczyna się na poziomie blatu kątem lotu
+  // w tym miejscu, stromieje jak trajektoria i wyokrągla się łukiem u podstawy
+  // (limit ~3 g). Dzięki temu przyziemienie jest niemal styczne (EFH ≈ 0).
+  function buildLanding(vx, vy, drop, H, xk) {
+    const tanA0 = Math.sqrt(vy * vy + 2 * G * drop) / vx;   // kąt lotu na poziomie blatu
+    const kq = G / (2 * vx * vx);                           // krzywizna paraboli lotu
+    const vLand = Math.sqrt(vx * vx + vy * vy + 2 * G * H);
     const rf = Math.min(4, Math.max(1, vLand * vLand / (3 * G))); // wyokrąglenie u podstawy
-    const pts = [[xk, 0]];
+    const pts = [[xk, -drop]];
     const du = 0.04;
-    let u = 0, x = xk, y = 0, a = th, arc = false, thLBot = th;
+    let u = 0, x = xk, y = -drop, a = Math.atan(tanA0), arc = false, thLBot = a;
     for (let i = 0; i < 6000; i++) {
       if (!arc) {
         u += du;
-        y = -tanT * u - kq * u * u;
-        a = Math.atan(tanT + 2 * kq * u);
+        y = -drop - tanA0 * u - kq * u * u;
+        a = Math.atan(tanA0 + 2 * kq * u);
         x = xk + u;
         if (y <= -H + rf * (1 - Math.cos(a))) { arc = true; thLBot = a; continue; }
         pts.push([x, y]);
@@ -409,18 +429,19 @@
       }
       if (y <= -H) break;
     }
-    return { pts, thLTop: th, thLBot, endX: pts[pts.length - 1][0] };
+    return { pts, thLTop: Math.atan(tanA0), thLBot, endX: pts[pts.length - 1][0] };
   }
 
-  // przyziemienie toru o prędkości v na powierzchni (deck y=0 do xk, potem polilinia zeskoku)
-  function impactOnSurface(v, th, surfPts, xk) {
-    const tanT = Math.tan(th), cos2T = Math.cos(th) ** 2;
-    const sweet = v * v * Math.sin(2 * th) / G;
-    if (sweet < xk - 0.02) return { x: sweet, y: 0, onDeck: true, thL: 0 };
+  // przyziemienie toru (vx, vy z lipy) na powierzchni: blat na −drop do xk,
+  // dalej polilinia zeskoku
+  function impactOnSurface(vxi, vyi, drop, surfPts, xk) {
+    const tD = (vyi + Math.sqrt(vyi * vyi + 2 * G * drop)) / G;
+    const sweet = vxi * tD;
+    if (sweet < xk - 0.02) return { x: sweet, y: -drop, onDeck: true, thL: 0 };
     for (let i = 1; i < surfPts.length; i++) {
       const [px, py] = surfPts[i];
-      const yT = px * tanT - G * px * px / (2 * v * v * cos2T);
-      if (yT <= py) {
+      const yT = px * (vyi / vxi) - G * px * px / (2 * vxi * vxi);
+      if (yT <= py + 1e-9) {
         const thL = Math.atan((py - surfPts[i - 1][1]) / (px - surfPts[i - 1][0]));
         return { x: px, y: py, onDeck: false, thL };
       }
@@ -445,37 +466,56 @@
     const aMaxG = +inputs.glimit.value;
     const tRamp = +inputs.teq.value;
 
+    const drop = +inputs.drop.value;
+    const wb = +inputs.wb.value;
+
     const to = buildTakeoff(vApr, th, aMaxG, tRamp);
     const v0 = to.v0, H = to.H;
 
-    // blat = dystans lotu przy prędkości projektowej (IMBA/mtbr: gap ≈ lot);
+    // efektywny kąt wybicia: cięciwa ostatniego "rozstawu osi" najazdu
+    // (tylne koło opuszcza lipę później — Trailism; przy rampie ≥ rozstaw = θ)
+    let thEff = th;
+    {
+      const p = to.pts;
+      let s = 0, i = p.length - 1;
+      while (i > 0 && s < wb) {
+        s += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]);
+        i--;
+      }
+      thEff = Math.max(5 * RAD, Math.atan2(to.lip.y - p[i][1], to.lip.x - p[i][0]));
+    }
+    const vx = v0 * Math.cos(thEff), vy = v0 * Math.sin(thEff);
+
+    // blat = dystans lotu przy prędkości projektowej (IMBA/mtbr: gap ≈ lot),
+    // liczony z wysokości lipy do poziomu blatu (lipa wystaje o `drop`);
     // rider projektowy przyziemia stycznie tuż za knucklem, wolniejsi lądują
     // płasko na blacie — po to jest stolik
-    const xSweet = v0 * v0 * Math.sin(2 * th) / G;
+    const tDeck = (vy + Math.sqrt(vy * vy + 2 * G * drop)) / G;
+    const xSweet = vx * tDeck;
     const xk = Math.max(1.2, xSweet);
 
-    const land = buildLanding(v0, th, H, xk);
+    const land = buildLanding(vx, vy, drop, H, xk);
 
     // wachlarz trajektorii
     const family = [0.65, 0.8, 0.9, 1.0].map(f => {
       const v = f * v0;
-      return { f, v, imp: impactOnSurface(v, th, land.pts, xk) };
+      return { f, v, imp: impactOnSurface(v * Math.cos(thEff), v * Math.sin(thEff), drop, land.pts, xk) };
     });
     const main = family[family.length - 1];
 
-    const tLand = main.imp.x / (v0 * Math.cos(th));
-    const hOverDeck = (v0 * Math.sin(th)) ** 2 / (2 * G);
+    const tLand = main.imp.x / vx;
+    const hOverDeck = vy * vy / (2 * G) + drop;       // apex nad poziomem blatu
     // EFH jako KONTROLA bezpieczeństwa (Trailism: limit ~4,9 ft / 1,5 m):
     // 1) przyziemienie projektowe na zeskoku (powinno być ~0, zeskok styczny)
-    const impactEfh = Math.max(0, efhAt(th, main.imp.x, main.imp.y, main.imp.thL));
+    const impactEfh = Math.max(0, efhAt(thEff, main.imp.x, main.imp.y, main.imp.thL));
     // 2) najgorszy przypadek: skrócenie i lądowanie płasko na blacie
     const caseEfh = hOverDeck;
     console.debug("EFH kontrola — zeskok:", impactEfh.toFixed(2), "m · case na blat:", caseEfh.toFixed(2), "m");
 
     return {
-      vKmh, vApr, v0, thetaDeg, th, aMaxG, tRamp,
+      vKmh, vApr, v0, thetaDeg, th, thEff, drop, wb, vx, vy, aMaxG, tRamp,
       takeoff: to, H, xk, land, family, main,
-      tLand, hOverDeck, hMax: H + hOverDeck,
+      tLand, hOverDeck, hMax: H + vy * vy / (2 * G),
       flightDist: main.imp.x,
       impactEfh, caseEfh,
       landAngleDeg: Math.max(0, -main.imp.thL / RAD),
@@ -492,21 +532,22 @@
     const startX = -Math.max(3, m.vApr * 0.6);
     pts.push([startX, 0]);
     for (const [x, y] of m.takeoff.pts) pts.push([x, y]);
-    // blat od lipy do knuckla (świat: y = H)
-    pts.push([lipX + 0.25, m.H]);
+    // blat od lipy do knuckla — lipa wystaje nad stół o `drop`
+    const deckY = m.H - m.drop;
+    pts.push([lipX + 0.3, deckY]);
     const kRound = Math.min(0.5, m.xk * 0.25);
-    pts.push([lipX + m.xk - kRound, m.H]);
+    pts.push([lipX + m.xk - kRound, deckY]);
     // knuckle: mały bezier styczny do blatu i początku zeskoku
     const i0 = Math.min(25, m.land.pts.length - 1);
     const s0 = m.land.pts[i0];
-    const slope0 = Math.atan(s0[1] / (s0[0] - m.xk));
+    const slope0 = Math.atan((s0[1] + m.drop) / (s0[0] - m.xk));
     const u0 = kRound * Math.cos(slope0);
-    const bEnd = [lipX + m.xk + u0, m.H + Math.tan(slope0) * u0];
+    const bEnd = [lipX + m.xk + u0, deckY + Math.tan(slope0) * u0];
     for (let i = 1; i <= 8; i++) {
       const u = i / 8, w = 1 - u;
       pts.push([
         w * w * (lipX + m.xk - kRound) + 2 * w * u * (lipX + m.xk) + u * u * bEnd[0],
-        w * w * m.H + 2 * w * u * m.H + u * u * bEnd[1],
+        w * w * deckY + 2 * w * u * deckY + u * u * bEnd[1],
       ]);
     }
     // zeskok (constant EFH) → świat
@@ -622,7 +663,7 @@
     // wymiary liniowe
     dim(sc.X(lipX) + 16, sc.Y(0), sc.X(lipX) + 16, sc.Y(m.H), `H = ${fmt(m.H)} m`, 12, 4, "start");
     dim(sc.X(0), sc.Y(0) + 26, sc.X(lipX), sc.Y(0) + 26, `najazd ${fmt(lipX, 1)} m`, 0, 18);
-    dim(sc.X(lipX + 0.25), sc.Y(m.H) - 16, sc.X(lipX + m.xk), sc.Y(m.H) - 16, `stół ${fmt(m.xk, 1)} m`, 0, -8);
+    dim(sc.X(lipX + 0.3), sc.Y(m.H - m.drop) - 16, sc.X(lipX + m.xk), sc.Y(m.H - m.drop) - 16, `stół ${fmt(m.xk, 1)} m`, 0, -8);
     dim(sc.X(lipX + m.xk), sc.Y(0) + 26, sc.X(lipX + m.land.endX), sc.Y(0) + 26, `zeskok ${fmt(m.land.endX - m.xk, 1)} m`, 0, 18);
 
     // kąt lipy: łuk między poziomem a rampą (przy lipie)
@@ -663,7 +704,7 @@
       const nn = 60, p = [];
       for (let i = 0; i <= nn; i++) {
         const xx = tr.imp.x * i / nn;
-        const yy = xx * Math.tan(m.th) - G * xx * xx / (2 * tr.v * tr.v * Math.cos(m.th) ** 2);
+        const yy = xx * Math.tan(m.thEff) - G * xx * xx / (2 * tr.v * tr.v * Math.cos(m.thEff) ** 2);
         p.push((i ? "L" : "M") + sc.X(lipX + xx).toFixed(1) + " " + sc.Y(m.H + yy).toFixed(1));
       }
       svgEl("path", {
@@ -721,11 +762,16 @@
     el("r-table").innerHTML = fmt(m.xk, 1) + " <small>m</small>";
     el("r-radius").innerHTML = fmt(m.takeoff.rEntry, 1) + " → " + fmt(m.takeoff.rTop, 1) + " <small>m</small>";
     el("r-landlen").innerHTML = fmt(m.land.endX - m.xk, 1) + " <small>m</small>";
+    const dTh = m.thetaDeg - m.thEff / RAD;
+    el("r-theff").innerHTML = fmt(m.thEff / RAD, 1) + "<small>° " +
+      (dTh > 0.3 ? `(rampa krótsza niż rozstaw osi: −${fmt(dTh, 1)}°)` : "(= kąt lipy, rampa ≥ rozstaw osi)") + "</small>";
 
     el("speed-out").innerHTML = m.vKmh + "<small>km/h</small>";
     el("angle-out").innerHTML = m.thetaDeg + "<small>°</small>";
     el("glimit-out").innerHTML = fmt(m.aMaxG, 1) + "<small>g</small>";
     el("teq-out").innerHTML = fmt(m.tRamp, 2) + "<small>s</small>";
+    el("drop-out").innerHTML = fmt(m.drop, 2) + "<small>m</small>";
+    el("wb-out").innerHTML = fmt(m.wb, 2) + "<small>m</small>";
   }
 
   /* ---------- tabela dla koparki ---------- */
