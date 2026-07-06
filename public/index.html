@@ -1445,6 +1445,66 @@
     return best;
   }
 
+  // łata-przymiar POŁOŻONA NA ŁUKU + strzałka ugięcia — wizualizacja pomiaru
+  // (łata to narzędzie pomiarowe przykładane do powierzchni, NIE element hopki)
+  function drawLata(sc, m) {
+    const pts = m.pts, c = eduLata;
+    const ptAt = s => {                       // punkt w odległości s po powierzchni od początku łuku
+      let acc = 0;
+      for (let i = 2; i < pts.length; i++) {
+        const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+        if (acc + d >= s) {
+          const t = (s - acc) / d;
+          return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * t, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * t];
+        }
+        acc += d;
+      }
+      return pts[pts.length - 1];
+    };
+    // łata dłuższa niż cały łuk? — uczciwy komunikat zamiast fałszywego pomiaru
+    const chordMax = 2 * m.R * Math.sin(m.th / 2);
+    if (c > chordMax * 0.98) {
+      const pm = ptAt(m.R * m.th * 0.5);
+      svgEl("text", {
+        x: sc.X(pm[0]) - 10, y: sc.Y(pm[1]) - 14, "text-anchor": "end",
+        "font-size": 11.5, "font-weight": 600, fill: "#b04a3a",
+      }, sc.svg).textContent = `łata ${fmt(c, 2)} m jest dłuższa niż cały łuk — do pomiaru weź krótszą`;
+      return;
+    }
+    const s0 = Math.max(0, (m.R * m.th - c) * 0.25); // łata na dolnej części łuku (z dala od roweru)
+    const E1 = ptAt(s0);
+    let E2 = null;
+    for (let i = 2; i < pts.length; i++)
+      if (Math.hypot(pts[i][0] - E1[0], pts[i][1] - E1[1]) >= c) { E2 = pts[i]; break; }
+    if (!E2) return;
+    const ux = (E2[0] - E1[0]) / c, uy = (E2[1] - E1[1]) / c;
+    let hMax = 0, foot = null, peak = null;
+    for (const p of pts) {
+      if (p[0] < Math.min(E1[0], E2[0]) - 1e-9 || p[0] > Math.max(E1[0], E2[0]) + 1e-9) continue;
+      const dx = p[0] - E1[0], dy = p[1] - E1[1];
+      const d2 = Math.abs(ux * dy - uy * dx);
+      if (d2 > hMax) {
+        hMax = d2;
+        const t = ux * dx + uy * dy;
+        foot = [E1[0] + ux * t, E1[1] + uy * t];
+        peak = p;
+      }
+    }
+    const g = svgEl("g", {}, sc.svg);
+    svgEl("line", { x1: sc.X(E1[0]), y1: sc.Y(E1[1]), x2: sc.X(E2[0]), y2: sc.Y(E2[1]), stroke: "#2e7d32", "stroke-width": 5, "stroke-linecap": "round", opacity: 0.9 }, g);
+    for (const E of [E1, E2]) svgEl("circle", { cx: sc.X(E[0]), cy: sc.Y(E[1]), r: 3, fill: "#2e7d32" }, g);
+    if (foot && hMax > 0.005) {
+      svgEl("line", { x1: sc.X(peak[0]), y1: sc.Y(peak[1]), x2: sc.X(foot[0]), y2: sc.Y(foot[1]), stroke: "#c94f3d", "stroke-width": 2 }, g);
+      svgEl("text", { x: sc.X(foot[0]) + 8, y: sc.Y((foot[1] + peak[1]) / 2) + 4, "font-size": 11.5, "font-weight": 700, fill: "#c94f3d" }, g)
+        .textContent = `h = ${fmt(hMax * 100, 1)} cm`;
+    }
+    const mid = [(E1[0] + E2[0]) / 2, (E1[1] + E2[1]) / 2];
+    svgEl("text", {
+      x: sc.X(mid[0] - uy * 0.22), y: sc.Y(mid[1] + ux * 0.22),
+      "font-size": 11.5, "font-weight": 700, fill: "#2e7d32", "text-anchor": "middle",
+    }, g).textContent = `łata (przymiar) ${fmt(c, 2)} m`;
+  }
+
   // czysty rower bez ludzika (jak na rysunkach Trailism) — na środkach kół
   function drawBike(sc, Cr, Cf, rw) {
     const X = sc.X, Y = sc.Y, S = sc.scale;
@@ -1547,6 +1607,9 @@
       "font-size": 12, "font-weight": 600, fill: "#3d8b37",
     }, sc.svg).textContent = `lipa ${m.thDeg}°`;
 
+    // łata-przymiar na łuku (pod rowerem, żeby rower był na wierzchu)
+    drawLata(sc, m);
+
     // rower: koła spoczywają na powierzchni (przód nad lipą)
     drawBike(sc, m.rear.C, m.Cf, m.rw);
 
@@ -1590,9 +1653,10 @@
       "font-size": 13, "font-weight": 700, fill: "#d97b29",
     }, sc.svg).textContent = `lot ${fmt(m.D, 1)} m →`;
 
-    // wymiar H
+    // wymiary techniczne: wysokość lipy i długość najazdu (podstawa)
     const dim = dimTools(sc);
     dim(sc.X(m.lip[0]) + 14, sc.Y(0), sc.X(m.lip[0]) + 14, sc.Y(m.H), `H = ${fmt(m.H)} m`, 10, 4, "start");
+    dim(sc.X(0), sc.Y(0) + 26, sc.X(m.lip[0]), sc.Y(0) + 26, `najazd ${fmt(m.lip[0], 1)} m`, 0, 17);
     el("edu-note").textContent = `R = ${fmt(m.R, 1)} m · na lipie ${fmt(m.v0 * 3.6, 1)} km/h`;
 
     // werdykty
@@ -1627,7 +1691,9 @@
     el("r-e-r").innerHTML = fmt(m.R, 1) + " <small>m</small>";
     el("r-e-h").innerHTML = fmt(m.H, 1) + " <small>m</small>";
 
-    el("e-sag-hint").textContent = `→ R = ${fmt(m.R, 1)} m · ${cutlapsClass(m.R)}`;
+    el("e-sag-hint").innerHTML = `→ R = ${fmt(m.R, 1)} m · ${cutlapsClass(m.R)}<br>` +
+      `łata to PRZYMIAR przykładany do łuku (zielona belka na rysunku), nie długość najazdu — ` +
+      `strzałka h to prześwit pod jej środkiem`;
     el("e-sag-label").textContent = `Strzałka ugięcia (łata ${fmt(eduLata * 100, 0)} cm)`;
     el("e-speed-out").innerHTML = el("e-speed").value + "<small>km/h</small>";
     el("e-sag-out").innerHTML = fmt(+el("e-sag").value, 1) + "<small>cm</small>";
