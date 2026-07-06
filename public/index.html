@@ -503,9 +503,9 @@
   <section class="card sources tool-pane tp-edu" hidden>
     <h2>🎓 Jak to działa — piaskownica wybicia</h2>
     <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">
-      Przesuwaj suwaki i patrz, co geometria robi z rowerem. Model celowo uproszczony
-      (czysty łuk kołowy z szablonu 127 cm) — do nauki zasad; wymiarowanie budowy robisz
-      w zakładce „Projekt skoczni”.
+      Ustawiasz wybicie tak, jak je budujesz: długość po prostej od podstawy do lipy,
+      wysokość lipy i ugięcie łuku — kąt lipy wychodzi sam (ugięcie 0 = deska).
+      Model uproszczony do nauki zasad; wymiarowanie budowy robisz w zakładce „Projekt skoczni”.
     </p>
     <div class="pane-grid">
       <div>
@@ -524,28 +524,23 @@
           <button data-wb="1.20" data-rw="0.35" class="active">Trail</button>
           <button data-wb="1.28" data-rw="0.36">Enduro</button>
         </div></div>
-        <div class="presets"><div class="grp" id="e-ramp">
-          <button data-r="on" class="active">✔ prosta rampa</button>
-          <button data-r="off">✘ łuk do samej lipy</button>
-        </div></div>
         <div class="slider-row">
           <div class="slider-head"><label for="e-speed">Prędkość najazdu</label><output id="e-speed-out">25<small>km/h</small></output></div>
           <input type="range" id="e-speed" min="10" max="40" step="1" value="25">
         </div>
         <div class="slider-row">
-          <div class="slider-head"><label for="e-sag" id="e-sag-label">Strzałka ugięcia (łata 127 cm)</label><output id="e-sag-out">6.0<small>cm</small></output></div>
-          <input type="range" id="e-sag" min="1.5" max="25" step="0.5" value="6">
-          <div class="presets" style="margin:8px 0 4px"><div class="grp" id="e-lata">
-            <button data-c="100">łata 1,0 m</button>
-            <button data-c="127" class="active">1,27 m (50″ Trailism)</button>
-            <button data-c="200">2,0 m</button>
-          </div></div>
-          <div class="slider-hint" id="e-sag-hint"></div>
+          <div class="slider-head"><label for="e-len">Długość wybicia (podstawa → lipa)</label><output id="e-len-out">3.0<small>m</small></output></div>
+          <input type="range" id="e-len" min="1" max="6" step="0.1" value="3">
+          <div class="slider-hint">mierzona po prostej od podstawy do lipy — tak jak przykładasz taśmę do ściany wybicia</div>
         </div>
         <div class="slider-row">
-          <div class="slider-head"><label for="e-angle">Kąt lipy</label><output id="e-angle-out">30<small>°</small></output></div>
-          <input type="range" id="e-angle" min="15" max="60" step="1" value="30">
-          <div class="slider-hint">kąt = miejsce, w którym ucinasz łuk — wyżej utniesz → stromiej i wyższa lipa</div>
+          <div class="slider-head"><label for="e-hlip">Wysokość lipy</label><output id="e-hlip-out">0.9<small>m</small></output></div>
+          <input type="range" id="e-hlip" min="0.3" max="2.5" step="0.05" value="0.9">
+        </div>
+        <div class="slider-row">
+          <div class="slider-head"><label for="e-sag">Ugięcie łuku (całego wybicia)</label><output id="e-sag-out">20<small>cm</small></output></div>
+          <input type="range" id="e-sag" min="0" max="60" step="1" value="20">
+          <div class="slider-hint" id="e-sag-hint"></div>
         </div>
         <div class="slider-row">
           <div class="slider-head"><label for="e-wb">Rozstaw osi roweru</label><output id="e-wb-out">1.20<small>m</small></output></div>
@@ -559,7 +554,7 @@
           <div class="res flight"><div class="lbl">Dystans lotu</div><div class="val" id="r-e-dist"></div></div>
           <div class="res flight"><div class="lbl">Wysokość nad lipą</div><div class="val" id="r-e-apex"></div></div>
           <div class="res geo"><div class="lbl">Promień łuku R</div><div class="val" id="r-e-r"></div></div>
-          <div class="res geo"><div class="lbl">Wysokość lipy H</div><div class="val" id="r-e-h"></div></div>
+          <div class="res geo"><div class="lbl">Kąt lipy (wynik ugięcia)</div><div class="val" id="r-e-h"></div></div>
         </div>
       </div>
     </div>
@@ -567,23 +562,24 @@
       <div class="ec"><b>🌀 Promień i przeciążenie</b>
         Im ciaśniejszy łuk i wyższa prędkość, tym mocniej Cię dociska: n = v²/(R·g).
         Do 1,5 g to przyjemna kompresja (norma Trailism), powyżej 2,5 g łuk „dobija”.
-        <span class="chk">▶ sprawdź: strzałka ugięcia + prędkość</span></div>
+        <span class="chk">▶ sprawdź: suwak ugięcia + prędkość</span></div>
       <div class="ec"><b>🚲 Rozstaw osi i cięciwa</b>
         Rower nie jedzie po łuku, tylko po cięciwie między kołami. Kąt wybicia to kąt tej
         cięciwy, gdy przód jest na lipie — krótki dirt „widzi” stromszą lipę niż długie enduro.
         <span class="chk">▶ sprawdź: presety rowerów</span></div>
-      <div class="ec"><b>📏 Prosta rampa (equilibrium)</b>
-        Odcinek prosty ≥ 1 długość roweru przed lipą: oba koła jadą po płaszczyźnie, rower
-        się nie dokręca, lot jest przewidywalny. Bez niej tył jeszcze skręca, gdy przód już leci.
-        <span class="chk">▶ sprawdź: przełącznik rampy</span></div>
+      <div class="ec"><b>📏 Deska czy łuk (ugięcie)</b>
+        Ugięcie 0 = deska: stały kąt od podstawy do lipy, przewidywalnie, ale bez popu
+        i z progiem na wejściu. Im większe ugięcie przy tej samej długości, tym ostrzejsza
+        lipa, mocniejszy docisk i większe kopnięcie.
+        <span class="chk">▶ sprawdź: suwak ugięcia od 0 w górę</span></div>
       <div class="ec"><b>📐 Kąt: dystans czy wysokość</b>
         45° niesie najdalej, do 30° jest najprzyjaźniej, 60°+ to winda w górę. Ciekawostka
         Trailism: 30° i 60° dają TEN SAM zasięg — różnią się tylko wysokością.
-        <span class="chk">▶ sprawdź: suwak kąta, patrz na dystans i wysokość</span></div>
+        <span class="chk">▶ sprawdź: kąt lipy rośnie z ugięciem — patrz na dystans i wysokość</span></div>
       <div class="ec"><b>🎯 Boost i squash</b>
-        Na łuku do samej lipy rider dokłada pompą do +4,8 km/h albo zbiera squashem −8 km/h
-        (Trailism) — zakres lądowania się rozjeżdża. Prosta rampa ten zakres zawęża.
-        <span class="chk">▶ sprawdź: wyłącz rampę i porównaj zielony/czerwony tor</span></div>
+        Na wygiętej lipie rider dokłada pompą do +4,8 km/h albo zbiera squashem −8 km/h
+        (Trailism) — zakres lądowania się rozjeżdża. Deska (ugięcie 0) jest w pełni przewidywalna.
+        <span class="chk">▶ sprawdź: zwiększ ugięcie i porównaj zielony/czerwony tor</span></div>
     </div>
   </section>
 
@@ -1360,30 +1356,38 @@
   }
 
   /* ================= TOOL: JAK TO DZIAŁA (EDU) ================= */
-  // Piaskownica edukacyjna: czysty łuk kołowy z szablonu (R = h/2 + c²/8h),
+  // Piaskownica edukacyjna: łuk kołowy przez podstawę i lipę (R = h/2 + c²/8h),
   // rower na łuku, werdykty po ludzku. Model celowo prostszy niż projektowy.
   let eduRW = 0.35;      // promień koła rysowanego roweru (kosmetyka, presety)
-  let eduLata = 1.27;    // długość łaty do strzałki ugięcia (50″ = szablon Trailism)
   let eduPrev = null;
 
   function eduModel() {
+    // Parametryzacja BUDOWLAŃCA: długość wybicia (cięciwa podstawa→lipa),
+    // wysokość lipy i ugięcie całego najazdu pod tą cięciwą.
+    // Ugięcie 0 = deska; więcej ugięcia = ostrzejsza lipa. Kąt lipy jest WYNIKIEM.
     const vA = +el("e-speed").value / 3.6;
+    const cLen = +el("e-len").value;
+    const Hlip = Math.min(+el("e-hlip").value, 0.9 * cLen);
     const hs = +el("e-sag").value / 100;
-    const thDeg = +el("e-angle").value;
-    const th = thDeg * RAD;
     const wb = +el("e-wb").value;
-    const ramp = document.querySelector("#e-ramp button.active").dataset.r === "on";
-    const c = eduLata;
-    const R = hs / 2 + c * c / (8 * hs);
-    // powierzchnia: płaski dojazd → łuk 0→θ → (opcjonalnie) prosta rampa = 1 rozstaw osi
-    const pts = [[-(wb + 1.5), 0], [0, 0]];
-    for (const p of arcPts([0, 0], R, 0, th, 0.02)) pts.push(p);
-    let lip = pts[pts.length - 1];
-    if (ramp) {
-      lip = [lip[0] + wb * Math.cos(th), lip[1] + wb * Math.sin(th)];
-      pts.push(lip);
+    const alpha = Math.asin(Hlip / cLen);               // kąt cięciwy podstawa→lipa
+    const flat = hs < 0.005;
+    let R = 1e9, gam = 0;
+    if (!flat) {
+      R = cLen * cLen / (8 * hs) + hs / 2;              // promień z cięciwy i ugięcia
+      gam = Math.asin(Math.min(cLen / (2 * R), 0.985)); // pół kąta łuku
     }
-    const H = lip[1];
+    const th = alpha + gam;                             // kąt LIPY (wynik)
+    const thDeg = th / RAD;
+    const entry = alpha - gam;                          // kąt wejścia przy podstawie
+    const lip = [cLen * Math.cos(alpha), Hlip];
+    const pts = [[-(wb + 1.5), 0], [0, 0]];
+    if (flat) {
+      for (let i = 1; i <= 30; i++) pts.push([lip[0] * i / 30, lip[1] * i / 30]);
+    } else {
+      for (const p of arcPts([0, 0], R, entry, th, 0.02)) pts.push(p);
+    }
+    const H = Hlip;
     const e0 = vA * vA - 2 * G * H;
     const tooSlow = e0 < 1.0;
     const v0 = Math.sqrt(Math.max(e0, 0.3));
@@ -1399,8 +1403,8 @@
     const e1 = eff(wb);
     const thEff = e1.th, rear = e1.rear;
     const thEffDirt = eff(1.02).th, thEffEnduro = eff(1.28).th;
-    const pitch = ramp ? 0 : Math.min(wb / R, th);   // obrót po lipie (tył jeszcze na łuku)
-    const omega = ramp ? 0 : v0 / R;                 // tempo obrotu [rad/s]
+    const pitch = flat ? 0 : Math.min(wb / R, 2 * gam); // obrót po lipie (tył jeszcze na łuku)
+    const omega = flat ? 0 : v0 / R;                    // tempo obrotu [rad/s]
     const tKick = wb / Math.max(v0, 0.3);
     const MPH = 0.44704;
     const fl = v => {
@@ -1409,9 +1413,10 @@
       return { D: vx * t, apex: vy * vy / (2 * G) };
     };
     const base = fl(v0), bo = fl(v0 + 3 * MPH), sq = fl(Math.max(v0 - 5 * MPH, 0.3));
-    const arcLen = R * th + (ramp ? wb : 0);
+    const arcLen = flat ? cLen : R * 2 * gam;
     return {
-      vA, vKmh: +el("e-speed").value, hs, th, thDeg, wb, ramp, R, pts, lip, H,
+      vA, vKmh: +el("e-speed").value, cLen, Hlip, hs, th, thDeg, wb, flat, R, gam,
+      alpha, entry, pts, lip, H,
       v0, n, tooSlow, thEff, thEffDirt, thEffEnduro, pitch, omega, tKick,
       D: base.D, apex: base.apex, Dbo: bo.D, Dsq: sq.D, arcLen,
       rw, Cf, rear,
@@ -1443,66 +1448,6 @@
       if (d > wb) lo = xc; else hi = xc;
     }
     return best;
-  }
-
-  // łata-przymiar POŁOŻONA NA ŁUKU + strzałka ugięcia — wizualizacja pomiaru
-  // (łata to narzędzie pomiarowe przykładane do powierzchni, NIE element hopki)
-  function drawLata(sc, m) {
-    const pts = m.pts, c = eduLata;
-    const ptAt = s => {                       // punkt w odległości s po powierzchni od początku łuku
-      let acc = 0;
-      for (let i = 2; i < pts.length; i++) {
-        const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
-        if (acc + d >= s) {
-          const t = (s - acc) / d;
-          return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * t, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * t];
-        }
-        acc += d;
-      }
-      return pts[pts.length - 1];
-    };
-    // łata dłuższa niż cały łuk? — uczciwy komunikat zamiast fałszywego pomiaru
-    const chordMax = 2 * m.R * Math.sin(m.th / 2);
-    if (c > chordMax * 0.98) {
-      const pm = ptAt(m.R * m.th * 0.5);
-      svgEl("text", {
-        x: sc.X(pm[0]) - 10, y: sc.Y(pm[1]) - 14, "text-anchor": "end",
-        "font-size": 11.5, "font-weight": 600, fill: "#b04a3a",
-      }, sc.svg).textContent = `łata ${fmt(c, 2)} m jest dłuższa niż cały łuk — do pomiaru weź krótszą`;
-      return;
-    }
-    const s0 = Math.max(0, (m.R * m.th - c) * 0.25); // łata na dolnej części łuku (z dala od roweru)
-    const E1 = ptAt(s0);
-    let E2 = null;
-    for (let i = 2; i < pts.length; i++)
-      if (Math.hypot(pts[i][0] - E1[0], pts[i][1] - E1[1]) >= c) { E2 = pts[i]; break; }
-    if (!E2) return;
-    const ux = (E2[0] - E1[0]) / c, uy = (E2[1] - E1[1]) / c;
-    let hMax = 0, foot = null, peak = null;
-    for (const p of pts) {
-      if (p[0] < Math.min(E1[0], E2[0]) - 1e-9 || p[0] > Math.max(E1[0], E2[0]) + 1e-9) continue;
-      const dx = p[0] - E1[0], dy = p[1] - E1[1];
-      const d2 = Math.abs(ux * dy - uy * dx);
-      if (d2 > hMax) {
-        hMax = d2;
-        const t = ux * dx + uy * dy;
-        foot = [E1[0] + ux * t, E1[1] + uy * t];
-        peak = p;
-      }
-    }
-    const g = svgEl("g", {}, sc.svg);
-    svgEl("line", { x1: sc.X(E1[0]), y1: sc.Y(E1[1]), x2: sc.X(E2[0]), y2: sc.Y(E2[1]), stroke: "#2e7d32", "stroke-width": 5, "stroke-linecap": "round", opacity: 0.9 }, g);
-    for (const E of [E1, E2]) svgEl("circle", { cx: sc.X(E[0]), cy: sc.Y(E[1]), r: 3, fill: "#2e7d32" }, g);
-    if (foot && hMax > 0.005) {
-      svgEl("line", { x1: sc.X(peak[0]), y1: sc.Y(peak[1]), x2: sc.X(foot[0]), y2: sc.Y(foot[1]), stroke: "#c94f3d", "stroke-width": 2 }, g);
-      svgEl("text", { x: sc.X(foot[0]) + 8, y: sc.Y((foot[1] + peak[1]) / 2) + 4, "font-size": 11.5, "font-weight": 700, fill: "#c94f3d" }, g)
-        .textContent = `h = ${fmt(hMax * 100, 1)} cm`;
-    }
-    const mid = [(E1[0] + E2[0]) / 2, (E1[1] + E2[1]) / 2];
-    svgEl("text", {
-      x: sc.X(mid[0] - uy * 0.22), y: sc.Y(mid[1] + ux * 0.22),
-      "font-size": 11.5, "font-weight": 700, fill: "#2e7d32", "text-anchor": "middle",
-    }, g).textContent = `łata (przymiar) ${fmt(c, 2)} m`;
   }
 
   // czysty rower bez ludzika (jak na rysunkach Trailism) — na środkach kół
@@ -1539,44 +1484,54 @@
     const add = (cls, icon, t, s) => rules.push({ cls, icon, t, s });
     if (m.tooSlow)
       add("booter", "⛔", "Za wolno na taką lipę",
-        `przy ${m.vKmh} km/h zabraknie Ci pędu, żeby wjechać ${fmt(m.H)} m w górę — dodaj prędkości albo zetnij łuk niżej (mniejszy kąt)`);
+        `przy ${m.vKmh} km/h zabraknie Ci pędu, żeby wjechać ${fmt(m.H)} m w górę — dodaj prędkości albo obniż lipę`);
+    if (!m.flat && m.entry < -3 * RAD)
+      add("medium", "🥄", "Łuk podcina grunt przy podstawie",
+        `wejście pod ${fmt(-m.entry / RAD, 0)}° W DÓŁ — za duże ugięcie przy tej wysokości robi rynnę; zmniejsz ugięcie albo podnieś lipę`);
+    else if (!m.flat && m.entry > 8 * RAD)
+      add("medium", "🪜", `Próg na wejściu: łuk zaczyna się od razu pod ${fmt(m.entry / RAD, 0)}°`,
+        "płynny najazd zaczyna się stycznie do ziemi — dodaj ugięcia albo obniż lipę");
+    if (m.flat)
+      add("friendly", "📏", `Deska — idealnie płaskie wybicie pod ${fmt(m.thDeg, 0)}°`,
+        "kąt stały od podstawy do lipy, zero kopnięcia i zero popu z łuku — przewidywalnie jak rampa ze sklejki, ale wjazd z progiem u podstawy");
     if (m.arcLen < m.wb)
       add("booter", "🚲", "Rower jest dłuższy niż cały najazd!",
-        `przednie koło mija lipę, a tylne stoi jeszcze na płaskim — wybijesz się pod ${te}°, a nie ${m.thDeg}°. Zobacz czerwoną cięciwę`);
+        `przednie koło mija lipę, a tylne stoi jeszcze na płaskim — wybijesz się pod ${te}°, a nie ${fmt(m.thDeg, 0)}°. Zobacz czerwoną cięciwę`);
     else if (m.R < 2 * m.wb)
       add("booter", "🤏", "Za ciasny promień na taki rower",
         `R ${fmt(m.R, 1)} m przy rozstawie ${fmt(m.wb, 2)} m — rower ledwo mieści się w łuku. BMX by tu wszedł, enduro nie (Cutlaps: poniżej ~2,7 m robi się nieprzyjemnie)`);
     if (m.n > 2.5)
       add("booter", "🔴", `${dg} g — łuk Cię „dobije”`,
         "takie przeciążenie składa zawieszenie i wyrzuca z równowagi — zwolnij albo zmniejsz strzałkę ugięcia (spłaszczysz łuk)");
-    if (!m.ramp && (m.pitch > 18 * RAD || m.omega > 150 * RAD))
+    if (!m.flat && (m.pitch > 18 * RAD || m.omega > 150 * RAD))
       add("booter", "🐴", "Ten stolik będzie kopał przodem!",
-        `gdy przód minie lipę, tył jeszcze jedzie po łuku — rower obróci się ~${pd}° w ${fmt(m.tKick, 2)} s (${om}°/s). Włącz prostą rampę albo powiększ promień`);
+        `gdy przód minie lipę, tył jeszcze jedzie po łuku — rower obróci się ~${pd}° w ${fmt(m.tKick, 2)} s (${om}°/s). Zmniejsz ugięcie albo wydłuż wybicie`);
     if (m.n > 1.5 && m.n <= 2.5)
       add("medium", "🟠", `Mocna kompresja: ${dg} g`,
         "klasyka dirtów: łuk zabiera prędkość i dodaje „popu”, ale początkującego złoży do kierownicy. Family friendly = poniżej 1,5 g (Trailism)");
-    if (!m.ramp && !(m.pitch > 18 * RAD || m.omega > 150 * RAD))
-      add("medium", "🎲", "Bez rampy lot jest mniej przewidywalny",
-        `ostatni metr przed lipą to wciąż łuk: rider może pompować (+4,8 km/h → ${fmt(m.Dbo, 1)} m) albo squashować (−8 km/h → ${fmt(m.Dsq, 1)} m). Przewidywalnie robi się z rampą ≥ 1 długości roweru (Trailism)`);
+    if (!m.flat && !(m.pitch > 18 * RAD || m.omega > 150 * RAD) && m.n >= 0.8)
+      add("medium", "🎲", "Krzywa lipa = pompowalna",
+        `rider może dołożyć pompą (+4,8 km/h → ${fmt(m.Dbo, 1)} m) albo squashować (−8 km/h → ${fmt(m.Dsq, 1)} m) — im większe ugięcie, tym większy rozstrzał lądowania (Trailism)`);
     if (m.arcLen >= m.wb && (m.th - m.thEff) > 3 * RAD)
-      add("medium", "📐", `Lipa ma ${m.thDeg}°, ale Ty wybijesz się pod ${te}°`,
+      add("medium", "📐", `Lipa ma ${fmt(m.thDeg, 0)}°, ale Ty wybijesz się pod ${te}°`,
         `tył jest jeszcze na łuku, gdy przód mija lipę. Dirt (1,02 m) poleciałby pod ${td}°, enduro (1,28 m) pod ${ten}° — krótki rower „widzi” stromszą lipę`);
     if (m.thDeg > 50)
-      add("medium", "🚀", `${m.thDeg}° to winda, nie skocznia`,
+      add("medium", "🚀", `${fmt(m.thDeg, 0)}° to winda, nie skocznia`,
         `zyskujesz wysokość (${fmt(m.apex, 1)} m), tracisz dystans (${fmt(m.D, 1)} m). 45° niesie najdalej; 60°+ buduje się tylko dla wysokości (Lee). Ciekawostka: 30° i 60° dają ten sam zasięg`);
     if (m.thDeg >= 42 && m.thDeg <= 48)
       add("friendly", "🏹", "Strefa maksymalnego dystansu",
         `przy 45° ta sama prędkość niesie najdalej (${fmt(m.D, 1)} m) — każdy km/h zamienia się w metry, nie w wysokość`);
-    if (m.n < 0.8)
+    if (m.n < 0.8 && !m.flat)
       add("friendly", "😴", `${dg} g — ledwo poczujesz ten łuk`,
-        "bezpiecznie i przewidywalnie, ale bez kompresji nie ma z czego „pompować” — najazd działa jak zwykła deska");
-    if (m.n >= 0.8 && m.n <= 1.5 && m.ramp && m.thDeg <= 35)
+        "bezpiecznie i przewidywalnie, ale bez kompresji nie ma z czego „pompować” — prawie jak deska");
+    const gentle = m.n >= 0.8 && m.n <= 1.5 && m.thDeg <= 35 && m.entry > -2 * RAD && m.entry < 8 * RAD;
+    if (gentle)
       add("friendly", "🟢", "Łagodne, dla każdego!",
-        `miła kompresja ${dg} g, rower stabilny na prostej rampie, wybicie równe kątowi lipy — dokładnie tak wygląda family friendly stolik`);
-    if (m.H > 2.5 || m.arcLen > 10)
-      add("medium", "📏", `Ten najazd to budowla: ${fmt(m.arcLen, 1)} m łuku, ${fmt(m.H, 1)} m wysokości`,
-        `tak łagodny łuk potrzebuje masy ziemi, żeby dojść do ${m.thDeg}° — dlatego strome lipy buduje się ciaśniejszym promieniem`);
-    if (m.n >= 0.8 && m.n <= 1.5 && !(m.ramp && m.thDeg <= 35))
+        `miła kompresja ${dg} g, wejście stycznie do ziemi, lipa ${fmt(m.thDeg, 0)}° — dokładnie tak wygląda family friendly wybicie`);
+    if (m.Hlip > 2 || m.cLen > 5)
+      add("medium", "📏", `To wybicie to budowla: ${fmt(m.cLen, 1)} m ściany, ${fmt(m.Hlip, 1)} m wysokości`,
+        "tyle ziemi trzeba przerzucić na sam najazd — dlatego strome lipy buduje się krótsze i z większym ugięciem");
+    if (m.n >= 0.8 && m.n <= 1.5 && !gentle)
       add("friendly", "👍", `Przyjemna kompresja ${dg} g`,
         "czujesz dociążenie, masz z czego pompować, a nic Cię nie składa");
     if (!rules.length)
@@ -1605,10 +1560,29 @@
     if (!same) svgEl("text", {
       x: sc.X(m.lip[0] + 0.95 * Math.cos(m.th)), y: sc.Y(m.lip[1] + 0.95 * Math.sin(m.th)) - 6,
       "font-size": 12, "font-weight": 600, fill: "#3d8b37",
-    }, sc.svg).textContent = `lipa ${m.thDeg}°`;
+    }, sc.svg).textContent = `lipa ${fmt(m.thDeg, 0)}°`;
 
-    // łata-przymiar na łuku (pod rowerem, żeby rower był na wierzchu)
-    drawLata(sc, m);
+    // cięciwa podstawa→lipa + ugięcie — tak właśnie mierzy budowlaniec
+    svgEl("line", {
+      x1: sc.X(0), y1: sc.Y(0), x2: sc.X(m.lip[0]), y2: sc.Y(m.lip[1]),
+      stroke: "#2e7d32", "stroke-width": 2, "stroke-dasharray": "6 5", opacity: 0.9,
+    }, sc.svg);
+    if (!m.flat) {
+      const nx = -Math.sin(m.alpha), ny = Math.cos(m.alpha);
+      const Mx = m.lip[0] / 2, My = m.lip[1] / 2;
+      svgEl("line", {
+        x1: sc.X(Mx), y1: sc.Y(My), x2: sc.X(Mx - nx * m.hs), y2: sc.Y(My - ny * m.hs),
+        stroke: "#c94f3d", "stroke-width": 2,
+      }, sc.svg);
+      svgEl("text", {
+        x: sc.X(Mx - nx * m.hs) + 8, y: sc.Y(My - ny * m.hs / 2) + 4,
+        "font-size": 11.5, "font-weight": 700, fill: "#c94f3d",
+      }, sc.svg).textContent = `ugięcie ${fmt(m.hs * 100, 0)} cm`;
+    }
+    svgEl("text", {
+      x: sc.X(m.lip[0] * 0.42 - Math.sin(m.alpha) * 0.16), y: sc.Y(m.lip[1] * 0.42 + Math.cos(m.alpha) * 0.16) - 4,
+      "font-size": 11.5, "font-weight": 700, fill: "#2e7d32", "text-anchor": "middle",
+    }, sc.svg).textContent = `wybicie ${fmt(m.cLen, 1)} m (po prostej)`;
 
     // rower: koła spoczywają na powierzchni (przód nad lipą)
     drawBike(sc, m.rear.C, m.Cf, m.rw);
@@ -1642,7 +1616,7 @@
       }
       svgEl("path", { d: p.join(" "), fill: "none", stroke: color, "stroke-width": wdt, opacity: op, "stroke-dasharray": "7 6", "stroke-linecap": "round" }, sc.svg);
     };
-    if (!m.ramp) {
+    if (!m.flat) {
       const MPH = 0.44704;
       traj(m.v0 + 3 * MPH, "#3d8b37", 1.3, 0.7);
       traj(Math.max(m.v0 - 5 * MPH, 0.3), "#b04a3a", 1.3, 0.6);
@@ -1683,21 +1657,22 @@
     // duże liczby
     el("r-e-g").innerHTML = fmt(m.n, 1) + " <small>g " + (m.n > 1.5 ? "⚠️ family friendly < 1,5 g (Trailism)" : "(family friendly < 1,5 g)") + "</small>";
     const dTh = m.thDeg - m.thEff / RAD;
-    el("r-e-theff").innerHTML = fmt(m.thEff / RAD, 0) + "<small>° " + (dTh > 1 ? `(lipa ${m.thDeg}° — rozstaw osi zabiera ${fmt(dTh, 0)}°)` : `(= kąt lipy)`) + "</small>";
-    el("r-e-pitch").innerHTML = fmt(m.pitch / RAD, 0) + "<small>°" + (m.ramp ? " (rampa = 0)" : "") + "</small>";
+    el("r-e-theff").innerHTML = fmt(m.thEff / RAD, 0) + "<small>° " + (dTh > 1 ? `(lipa ${fmt(m.thDeg, 0)}° — rozstaw osi zabiera ${fmt(dTh, 0)}°)` : `(= kąt lipy)`) + "</small>";
+    el("r-e-pitch").innerHTML = fmt(m.pitch / RAD, 0) + "<small>°" + (m.flat ? " (deska = 0)" : "") + "</small>";
     el("r-e-omega").innerHTML = fmt(m.omega / RAD, 0) + " <small>°/s</small>";
     el("r-e-dist").innerHTML = fmt(m.D, 1) + " <small>m</small>";
     el("r-e-apex").innerHTML = fmt(m.apex, 1) + " <small>m</small>";
-    el("r-e-r").innerHTML = fmt(m.R, 1) + " <small>m</small>";
-    el("r-e-h").innerHTML = fmt(m.H, 1) + " <small>m</small>";
+    el("r-e-r").innerHTML = (m.flat ? "∞ (deska)" : fmt(m.R, 1) + " <small>m</small>");
+    el("r-e-h").innerHTML = fmt(m.thDeg, 0) + "<small>° " +
+      (m.flat ? "(= kąt cięciwy)" : `(wejście ${fmt(m.entry / RAD, 0)}°, cięciwa ${fmt(m.alpha / RAD, 0)}°)`) + "</small>";
 
-    el("e-sag-hint").innerHTML = `→ R = ${fmt(m.R, 1)} m · ${cutlapsClass(m.R)}<br>` +
-      `łata to PRZYMIAR przykładany do łuku (zielona belka na rysunku), nie długość najazdu — ` +
-      `strzałka h to prześwit pod jej środkiem`;
-    el("e-sag-label").textContent = `Strzałka ugięcia (łata ${fmt(eduLata * 100, 0)} cm)`;
+    el("e-sag-hint").innerHTML = m.flat
+      ? "0 = DESKA: idealnie płaskie wybicie, kąt stały"
+      : `prześwit między prostą podstawa→lipa a najgłębszym punktem łuku (czerwona kreska) · → R = ${fmt(m.R, 1)} m · ${cutlapsClass(m.R)}`;
     el("e-speed-out").innerHTML = el("e-speed").value + "<small>km/h</small>";
-    el("e-sag-out").innerHTML = fmt(+el("e-sag").value, 1) + "<small>cm</small>";
-    el("e-angle-out").innerHTML = el("e-angle").value + "<small>°</small>";
+    el("e-len-out").innerHTML = fmt(+el("e-len").value, 1) + "<small>m</small>";
+    el("e-hlip-out").innerHTML = fmt(+el("e-hlip").value, 2) + "<small>m</small>";
+    el("e-sag-out").innerHTML = el("e-sag").value + "<small>cm</small>";
     el("e-wb-out").innerHTML = fmt(+el("e-wb").value, 2) + "<small>m</small>";
   }
 
@@ -1719,20 +1694,11 @@
     eduRW = +b.dataset.rw;
     renderEdu();
   }));
-  document.querySelectorAll("#e-ramp button").forEach(b => b.addEventListener("click", () => {
-    document.querySelectorAll("#e-ramp button").forEach(x => x.classList.toggle("active", x === b));
-    renderEdu();
-  }));
-  document.querySelectorAll("#e-lata button").forEach(b => b.addEventListener("click", () => {
-    document.querySelectorAll("#e-lata button").forEach(x => x.classList.toggle("active", x === b));
-    eduLata = +b.dataset.c / 100;
-    renderEdu();
-  }));
   el("e-wb").addEventListener("input", () => {
     document.querySelectorAll("#e-bike button").forEach(x => x.classList.remove("active"));
     renderEdu();
   });
-  for (const id of ["e-speed", "e-sag", "e-angle"]) el(id).addEventListener("input", renderEdu);
+  for (const id of ["e-speed", "e-len", "e-hlip", "e-sag"]) el(id).addEventListener("input", renderEdu);
   document.querySelectorAll("#k-vmode button").forEach(b => b.addEventListener("click", () => {
     document.querySelectorAll("#k-vmode button").forEach(x => x.classList.toggle("active", x === b));
     renderKicker();
