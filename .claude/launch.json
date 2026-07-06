@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "stolik-designer",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "http-server", "public", "-p", "8642", "-c-1"],
+      "port": 8642
+    }
+  ]
+}

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leśne Ścieżki — Projektant stolików</title>
+<style>
+  :root {
+    --forest: #2f5d2a;
+    --forest-dark: #234620;
+    --dirt: #a0713f;
+    --dirt-dark: #7a5027;
+    --paper: #f4f1ea;
+    --card: #ffffff;
+    --ink: #2b2b26;
+    --muted: #7a776e;
+    --accent: #d97b29;
+    --green: #3d8b37;
+    --amber: #d99c29;
+    --red: #c94f3d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+  header {
+    background: linear-gradient(135deg, var(--forest-dark), var(--forest));
+    color: #fff;
+    padding: 26px 32px 22px;
+  }
+  header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.3px; }
+  header h1 .logo { margin-right: 10px; }
+  header p { margin-top: 6px; font-size: 14px; opacity: 0.85; max-width: 720px; }
+  main {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(40, 40, 30, 0.08);
+    padding: 20px;
+  }
+  .card h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  /* --- Rysunek --- */
+  #stage { width: 100%; }
+  #stage svg { display: block; width: 100%; height: auto; }
+  .stage-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* --- Suwaki --- */
+  .slider-row { margin-bottom: 20px; }
+  .slider-row:last-child { margin-bottom: 0; }
+  .slider-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .slider-head label { font-size: 14px; font-weight: 600; }
+  .slider-head output {
+    font-size: 20px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--forest);
+  }
+  .slider-head output small { font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 2px; }
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--green), var(--amber), var(--red));
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid var(--forest);
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid var(--forest);
+    cursor: pointer;
+  }
+  .slider-hint { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+
+  details.advanced { margin-top: 16px; border-top: 1px dashed #ddd8cc; padding-top: 12px; }
+  details.advanced summary {
+    cursor: pointer;
+    font-size: 12.5px;
+    color: var(--muted);
+    user-select: none;
+  }
+  details.advanced .slider-row { margin-top: 14px; }
+  details.advanced .slider-head output { font-size: 15px; }
+  details.advanced input[type="range"] { background: #ddd8cc; height: 6px; }
+
+  /* --- Plakietka --- */
+  .badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 16px;
+  }
+  .badge small { display: block; font-weight: 500; font-size: 12px; opacity: 0.85; }
+  .badge.friendly { background: #e6f2e4; color: #26541f; }
+  .badge.medium   { background: #f7eed8; color: #7a5a10; }
+  .badge.booter   { background: #f8e3df; color: #7e2c1e; }
+
+  /* --- Wyniki --- */
+  .results { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .res {
+    background: #faf8f3;
+    border: 1px solid #eee9dd;
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .res.wide { grid-column: 1 / -1; }
+  .res .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+  .res .val {
+    font-size: 21px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    margin-top: 2px;
+  }
+  .res .val small { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .res.flight .val { color: var(--accent); }
+  .res.geo .val { color: var(--dirt-dark); }
+
+  /* --- Źródła --- */
+  .sources { grid-column: 1 / -1; }
+  .sources ul { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .sources li {
+    font-size: 12.5px;
+    line-height: 1.5;
+    background: #faf8f3;
+    border: 1px solid #eee9dd;
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: #55524a;
+  }
+  .sources a { color: var(--forest); font-weight: 600; text-decoration: none; }
+  .sources a:hover { text-decoration: underline; }
+  footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 10px 0 30px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="logo">🌲🚵</span>Leśne Ścieżki — projektant stolików</h1>
+  <p>Ustaw prędkość najazdu i kąt wybicia — narzędzie policzy pełną geometrię stolika (promień najazdu wg limitu przeciążeń,
+     segment stabilizacji przed lipą, długość stołu i zeskok dopasowany do trajektorii) oraz parametry lotu.</p>
+</header>
+
+<main>
+  <section class="card" id="stage-card">
+    <h2>Profil stolika i trajektoria lotu</h2>
+    <div id="stage"></div>
+    <div class="stage-footer">
+      <span>siatka: 1 m</span>
+      <span id="scale-note"></span>
+    </div>
+  </section>
+
+  <div>
+    <section class="card">
+      <h2>Parametry wejściowe</h2>
+
+      <div class="slider-row">
+        <div class="slider-head">
+          <label for="speed">Prędkość najazdu</label>
+          <output id="speed-out">20<small>km/h</small></output>
+        </div>
+        <input type="range" id="speed" min="10" max="40" step="1" value="20">
+        <div class="slider-hint">Trailism: przy promieniu ~3,7 m komfortowo do ~26 km/h</div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-head">
+          <label for="angle">Kąt wybicia (lipa)</label>
+          <output id="angle-out">25<small>°</small></output>
+        </div>
+        <input type="range" id="angle" min="15" max="50" step="1" value="25">
+        <div class="slider-hint">≤30° łagodne (Lee Likes Bikes) · 45° maks. dystans · więcej = booter na wysokość</div>
+      </div>
+
+      <details class="advanced">
+        <summary>Ustawienia zaawansowane</summary>
+        <div class="slider-row">
+          <div class="slider-head">
+            <label for="glimit">Limit przeciążenia na najeździe</label>
+            <output id="glimit-out">1.5<small>g</small></output>
+          </div>
+          <input type="range" id="glimit" min="1.2" max="2.0" step="0.1" value="1.5">
+          <div class="slider-hint">promień przejścia r = v² / (limit × 9,81) — Trailism: v²/14,7 przy 1,5 g</div>
+        </div>
+        <div class="slider-row">
+          <div class="slider-head">
+            <label for="teq">Segment stabilizacji przed lipą</label>
+            <output id="teq-out">0.27<small>s</small></output>
+          </div>
+          <input type="range" id="teq" min="0.15" max="0.35" step="0.01" value="0.27">
+          <div class="slider-hint">0,25–0,3 s prostego odcinka — rower przestaje się „bujać” przed wybiciem</div>
+        </div>
+      </details>
+    </section>
+
+    <section class="card" style="margin-top: 20px;">
+      <h2>Wyniki</h2>
+      <div id="badge"></div>
+      <div class="results">
+        <div class="res flight wide"><div class="lbl">Długość lotu (lipa → przyziemienie)</div><div class="val" id="r-dist"></div></div>
+        <div class="res flight"><div class="lbl">Wysokość lotu nad stołem</div><div class="val" id="r-hdeck"></div></div>
+        <div class="res flight"><div class="lbl">Maks. wysokość nad gruntem</div><div class="val" id="r-hmax"></div></div>
+        <div class="res flight"><div class="lbl">Czas lotu</div><div class="val" id="r-time"></div></div>
+        <div class="res flight"><div class="lbl">Kąt lądowania</div><div class="val" id="r-langle"></div></div>
+        <div class="res geo"><div class="lbl">Wysokość wybicia</div><div class="val" id="r-lip"></div></div>
+        <div class="res geo"><div class="lbl">Długość stołu (blat)</div><div class="val" id="r-table"></div></div>
+        <div class="res geo"><div class="lbl">Promień przejścia najazdu</div><div class="val" id="r-radius"></div></div>
+        <div class="res geo"><div class="lbl">Długość najazdu (w poziomie)</div><div class="val" id="r-ramp"></div></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card sources">
+    <h2>Na czym to policzone — źródła</h2>
+    <ul>
+      <li><a href="https://trailism.com/jump-design/" target="_blank">Trailism — Jump Design</a><br>
+        Promień przejścia r = v²/14,7 m/s² (limit 1,5 g), segment „equilibrium” 0,25–0,3 s przed lipą,
+        krzywe klotoidalne zamiast ostrych łuków, zeskok prowadzony po paraboli lotu.</li>
+      <li><a href="https://mtbtrailbuilding.com/calculators/jump-design" target="_blank">MTB Trail Building — kalkulator</a><br>
+        Wejścia: prędkość + kąt lipy (typowo 15–30°); wyjścia: dystans, wysokość, czas lotu, kąt lądowania.
+        Lądowanie szersze niż wybicie, stoliki dla początkujących.</li>
+      <li><a href="https://imbacanada.com/building-a-dirt-jump-or-freeride-park/" target="_blank">IMBA Canada — Dirt Jump / Freeride Park</a><br>
+        Dla początkujących: wybicie 60–90 cm, lipa→lądowanie 1,2–2,1 m, szerokość min. 1,5 m,
+        lądowanie szersze niż wybicie, stoliki zamiast dziur (gapów).</li>
+      <li><a href="https://www.leelikesbikes.com/formulas-for-building-jumps.html" target="_blank">Lee Likes Bikes — Formulas for building jumps</a><br>
+        Początkujący: niskie rampy, łagodne łuki ~30°, małe prędkości. 45° = maks. dystans, 60°+ = wysokość.
+        2× prędkość = 4× dystans i wysokość.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>Narzędzie poglądowe do projektowania — wymiary zawsze zweryfikuj w terenie (łopata &gt; fizyka).</footer>
+
+<script>
+(function () {
+  const G = 9.81;
+  const SVG_NS = "http://www.w3.org/2000/svg";
+
+  const el = id => document.getElementById(id);
+  const inputs = {
+    speed: el("speed"), angle: el("angle"),
+    glimit: el("glimit"), teq: el("teq"),
+  };
+
+  const fmt = (x, d = 2) => x.toLocaleString("pl-PL", { minimumFractionDigits: d, maximumFractionDigits: d });
+
+  /* ---------- model fizyczny ---------- */
+  function computeModel() {
+    const vKmh = +inputs.speed.value;
+    const v = vKmh / 3.6;                       // m/s
+    const thetaDeg = +inputs.angle.value;
+    const th = thetaDeg * Math.PI / 180;
+    const gLimit = +inputs.glimit.value;
+    const tEq = +inputs.teq.value;
+
+    // Najazd (Trailism): łuk o promieniu r do kąta θ + prosty segment equilibrium
+    const r = v * v / (gLimit * G);             // r = v²/14,7 przy 1,5 g
+    const lEq = tEq * v;                        // długość segmentu stabilizacji
+    const lip = {
+      x: r * Math.sin(th) + lEq * Math.cos(th),
+      y: r * (1 - Math.cos(th)) + lEq * Math.sin(th),
+    };
+
+    // Lot (rzut ukośny z lipy)
+    const vx = v * Math.cos(th), vy = v * Math.sin(th);
+    const hOverDeck = vy * vy / (2 * G);        // apex nad poziomem blatu
+    const tBack = 2 * vy / G;                   // powrót do wysokości blatu
+    const xSweet = vx * tBack;                  // sweet spot za lipą
+
+    // Stół: knuckle tuż przed sweet spotem — przyziemienie na szczycie zeskoku
+    const tableLen = Math.max(1.0, xSweet - 0.3);
+    const knuckleX = lip.x + tableLen;
+
+    // Zeskok prowadzony po paraboli lotu (Trailism: "landing follows the
+    // parabolic flight path") — zaczyna się pod kątem θ przy knucklu
+    // i płynnie się stromi aż do gruntu
+    const tanT = Math.tan(th);
+    const kq = G / (2 * vx * vx);               // krzywizna paraboli
+    const landLen = (-tanT + Math.sqrt(tanT * tanT + 4 * kq * lip.y)) / (2 * kq);
+    const landEndX = knuckleX + landLen;
+    const slopeBase = Math.atan(tanT + 2 * kq * landLen); // kąt u podstawy
+
+    // Przyziemienie projektowe: powrót do wysokości blatu (jak w kalkulatorze
+    // mtbtrailbuilding — równa wysokość wybicia i lądowania), kąt = θ
+    const tLand = tBack;
+    const touchdown = { x: lip.x + xSweet, y: lip.y };
+
+    return {
+      vKmh, v, thetaDeg, th, gLimit, tEq,
+      r, lEq, lip, vx, vy,
+      hOverDeck, hMax: lip.y + hOverDeck,
+      tLand, touchdown,
+      flightDist: xSweet,
+      landAngleDeg: thetaDeg,
+      slopeBaseDeg: slopeBase * 180 / Math.PI,
+      landCurve: u => lip.y - tanT * u - kq * u * u,
+      caseOnDeck: touchdown.x < knuckleX - 0.05,
+      tableLen, knuckleX, landLen, landEndX,
+    };
+  }
+
+  /* ---------- klasyfikacja ---------- */
+  function classify(m) {
+    if (m.thetaDeg <= 30 && m.vKmh <= 26)
+      return { cls: "friendly", icon: "🟢", label: "Łagodny — family friendly",
+               note: "≤30° i umiarkowana prędkość: profil dla początkujących (Lee Likes Bikes, IMBA)" };
+    if (m.thetaDeg <= 45)
+      return { cls: "medium", icon: "🟡", label: "Średni — na dystans",
+               note: "45° daje maksymalny zasięg; wymaga pewnej techniki (Lee Likes Bikes)" };
+    return { cls: "booter", icon: "🔴", label: "Booter — na wysokość",
+             note: "Strome wybicie posyła w górę, nie w dal — tylko dla zaawansowanych" };
+  }
+
+  /* ---------- geometria profilu (metry) ---------- */
+  function buildProfile(m) {
+    const pts = [];
+    const startX = -Math.max(2, m.v * 0.4);     // dobieg
+    pts.push([startX, 0]);
+    // łuk najazdu
+    const steps = 24;
+    for (let i = 0; i <= steps; i++) {
+      const phi = m.th * i / steps;
+      pts.push([m.r * Math.sin(phi), m.r * (1 - Math.cos(phi))]);
+    }
+    // segment equilibrium do lipy
+    pts.push([m.lip.x, m.lip.y]);
+    // blat stołu (lipa jest z przodu; blat płasko do knuckla, z zaokrągleniem za lipą)
+    pts.push([m.lip.x + 0.25, m.lip.y]);
+    const kRound = Math.min(0.6, m.tableLen * 0.25, m.landLen * 0.3);
+    pts.push([m.knuckleX - kRound, m.lip.y]);
+    // knuckle: zaokrąglenie bezierem stycznym do blatu i początku zeskoku
+    const u0 = kRound * Math.cos(m.th);
+    const bx0 = m.knuckleX - kRound, bcx = m.knuckleX;
+    const bx1 = m.knuckleX + u0, by1 = m.landCurve(u0);
+    for (let i = 1; i <= 8; i++) {
+      const u = i / 8, w = 1 - u;
+      pts.push([
+        w * w * bx0 + 2 * w * u * bcx + u * u * bx1,
+        w * w * m.lip.y + 2 * w * u * m.lip.y + u * u * by1,
+      ]);
+    }
+    // zeskok po paraboli lotu do gruntu
+    const lSteps = 16;
+    for (let i = 1; i <= lSteps; i++) {
+      const u = u0 + (m.landLen - u0) * i / lSteps;
+      pts.push([m.knuckleX + u, Math.max(m.landCurve(u), 0)]);
+    }
+    // wybieg
+    const runout = Math.max(2.5, m.v * 0.5);
+    pts.push([m.landEndX + runout, 0]);
+    return { pts, startX, endX: m.landEndX + runout };
+  }
+
+  function trajectoryPoints(m) {
+    const pts = [];
+    const n = 60;
+    for (let i = 0; i <= n; i++) {
+      const t = m.tLand * i / n;
+      pts.push([m.lip.x + m.vx * t, m.lip.y + m.vy * t - G / 2 * t * t]);
+    }
+    return pts;
+  }
+
+  /* ---------- render SVG ---------- */
+  const W = 1000, H = 520, PAD = 46;
+
+  function svgEl(name, attrs, parent) {
+    const n = document.createElementNS(SVG_NS, name);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+
+  function render() {
+    const m = computeModel();
+    const prof = buildProfile(m);
+    const traj = trajectoryPoints(m);
+
+    // zakres świata
+    const x0 = prof.startX, x1 = prof.endX;
+    const yTop = Math.max(m.hMax + 0.8, m.lip.y + 1.2, 2);
+    const scale = Math.min((W - 2 * PAD) / (x1 - x0), (H - 2 * PAD) / (yTop + 0.6));
+    const X = x => PAD + (x - x0) * scale;
+    const Y = y => H - PAD - (y + 0) * scale;
+
+    const stage = el("stage");
+    stage.innerHTML = "";
+    const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}` }, stage);
+
+    // defs: gradient ziemi
+    const defs = svgEl("defs", {}, svg);
+    const grad = svgEl("linearGradient", { id: "dirt", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    svgEl("stop", { offset: "0%", "stop-color": "#b98a55" }, grad);
+    svgEl("stop", { offset: "100%", "stop-color": "#8a5f33" }, grad);
+    const sky = svgEl("linearGradient", { id: "sky", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    svgEl("stop", { offset: "0%", "stop-color": "#eaf4fb" }, sky);
+    svgEl("stop", { offset: "100%", "stop-color": "#fdfcf8" }, sky);
+
+    svgEl("rect", { x: 0, y: 0, width: W, height: H, fill: "url(#sky)", rx: 10 }, svg);
+
+    // siatka metrowa
+    const grid = svgEl("g", { stroke: "#d8d2c2", "stroke-width": 1, opacity: 0.6 }, svg);
+    for (let gx = Math.ceil(x0); gx <= x1; gx++) {
+      svgEl("line", { x1: X(gx), y1: Y(0), x2: X(gx), y2: Y(yTop) }, grid);
+    }
+    for (let gy = 0; gy <= yTop; gy++) {
+      svgEl("line", { x1: X(x0), y1: Y(gy), x2: X(x1), y2: Y(gy) }, grid);
+      if (gy > 0) svgEl("text", {
+        x: X(x0) + 4, y: Y(gy) - 3, "font-size": 10, fill: "#a49f90", stroke: "none",
+      }, grid).textContent = gy + " m";
+    }
+
+    // bryła stolika + grunt
+    const dirtPath = prof.pts.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + " " + Y(p[1]).toFixed(1)).join(" ")
+      + ` L ${X(x1)} ${Y(-0.5)} L ${X(x0)} ${Y(-0.5)} Z`;
+    svgEl("path", { d: dirtPath, fill: "url(#dirt)", stroke: "none" }, svg);
+    // linia powierzchni
+    const surf = prof.pts.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + " " + Y(p[1]).toFixed(1)).join(" ");
+    svgEl("path", { d: surf, fill: "none", stroke: "#5f4222", "stroke-width": 3, "stroke-linejoin": "round" }, svg);
+    // trawa na gruncie
+    svgEl("line", { x1: X(x0), y1: Y(0) + 1.5, x2: X(x1), y2: Y(0) + 1.5, stroke: "#4a7d3c", "stroke-width": 3 }, svg);
+
+    // trajektoria
+    const trajPath = traj.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + " " + Y(p[1]).toFixed(1)).join(" ");
+    svgEl("path", {
+      d: trajPath, fill: "none", stroke: "#d97b29", "stroke-width": 2.5,
+      "stroke-dasharray": "7 6", "stroke-linecap": "round",
+    }, svg);
+
+    // punkty: lipa i przyziemienie
+    svgEl("circle", { cx: X(m.lip.x), cy: Y(m.lip.y), r: 5, fill: "#d97b29", stroke: "#fff", "stroke-width": 2 }, svg);
+    svgEl("circle", { cx: X(m.touchdown.x), cy: Y(m.touchdown.y), r: 5, fill: "#c94f3d", stroke: "#fff", "stroke-width": 2 }, svg);
+
+    // rowerzysta w apexie
+    const apexX = m.lip.x + m.vx * (m.vy / G);
+    svgEl("text", {
+      x: X(apexX), y: Y(m.hMax) - 8, "font-size": 26, "text-anchor": "middle",
+    }, svg).textContent = "🚵";
+
+    // wymiarowanie
+    const dim = svgEl("g", { "font-size": 12.5, "font-weight": 600, fill: "#55524a" }, svg);
+    function dimLine(xa, ya, xb, yb, label, dxT, dyT, anchor) {
+      svgEl("line", { x1: xa, y1: ya, x2: xb, y2: yb, stroke: "#8a867a", "stroke-width": 1.2, "marker-start": "url(#arr)", "marker-end": "url(#arr)" }, dim);
+      const t = svgEl("text", { x: (xa + xb) / 2 + dxT, y: (ya + yb) / 2 + dyT, "text-anchor": anchor || "middle" }, dim);
+      t.textContent = label;
+    }
+    const mk = svgEl("marker", { id: "arr", markerWidth: 8, markerHeight: 8, refX: 4, refY: 4, orient: "auto-start-reverse" }, defs);
+    svgEl("path", { d: "M0,1 L7,4 L0,7", fill: "none", stroke: "#8a867a", "stroke-width": 1.2 }, mk);
+
+    // wysokość wybicia
+    dimLine(X(m.lip.x) + 16, Y(0), X(m.lip.x) + 16, Y(m.lip.y), `H = ${fmt(m.lip.y)} m`, 10, 4, "start");
+    // długość stołu
+    dimLine(X(m.lip.x + 0.25), Y(m.lip.y) - 14, X(m.knuckleX), Y(m.lip.y) - 14, `stół ${fmt(m.tableLen, 1)} m`, 0, -6);
+    // długość lotu
+    dimLine(X(m.lip.x), Y(0) + 26, X(m.touchdown.x), Y(0) + 26, `lot ${fmt(m.flightDist)} m`, 0, 18);
+
+    // etykiety części
+    const partLbl = svgEl("g", { "font-size": 11.5, fill: "#8a5f33", "font-weight": 600 }, svg);
+    svgEl("text", { x: X(m.lip.x * 0.45), y: Y(m.lip.y * 0.42) + 24, "text-anchor": "middle" }, partLbl).textContent = "najazd r=" + fmt(m.r, 1) + " m";
+    svgEl("text", { x: X(m.knuckleX + m.landLen * 0.5), y: Y(m.lip.y * 0.5) + 24, "text-anchor": "middle" }, partLbl).textContent = "zeskok " + fmt(m.thetaDeg, 0) + "–" + fmt(m.slopeBaseDeg, 0) + "°";
+
+    el("scale-note").textContent = `całość: ~${fmt(prof.endX - prof.startX, 1)} m długości`;
+
+    /* ---------- wyniki ---------- */
+    const c = classify(m);
+    el("badge").innerHTML =
+      `<div class="badge ${c.cls}"><span style="font-size:22px">${c.icon}</span>` +
+      `<span>${c.label}<small>${c.note}</small></span></div>` +
+      (m.caseOnDeck
+        ? `<div class="badge medium"><span style="font-size:18px">⚠️</span>` +
+          `<span>Przy tej prędkości lądowanie wypada na blacie stołu<small>zwiększ prędkość albo skróć stół — to bezpieczne na stoliku, ale mało płynne</small></span></div>`
+        : "");
+
+    el("r-dist").innerHTML = fmt(m.flightDist) + " <small>m</small>";
+    el("r-hdeck").innerHTML = fmt(m.hOverDeck) + " <small>m</small>";
+    el("r-hmax").innerHTML = fmt(m.hMax) + " <small>m</small>";
+    el("r-time").innerHTML = fmt(m.tLand) + " <small>s</small>";
+    el("r-langle").innerHTML = fmt(m.landAngleDeg, 0) + "<small>°</small>";
+    el("r-lip").innerHTML = fmt(m.lip.y) + " <small>m</small>";
+    el("r-table").innerHTML = fmt(m.tableLen, 1) + " <small>m</small>";
+    el("r-radius").innerHTML = fmt(m.r, 1) + " <small>m</small>";
+    el("r-ramp").innerHTML = fmt(m.lip.x, 1) + " <small>m</small>";
+
+    el("speed-out").innerHTML = m.vKmh + "<small>km/h</small>";
+    el("angle-out").innerHTML = m.thetaDeg + "<small>°</small>";
+    el("glimit-out").innerHTML = fmt(m.gLimit, 1) + "<small>g</small>";
+    el("teq-out").innerHTML = fmt(m.tEq, 2) + "<small>s</small>";
+  }
+
+  for (const k in inputs) inputs[k].addEventListener("input", render);
+  render();
+})();
+</script>
+</body>
+</html>
