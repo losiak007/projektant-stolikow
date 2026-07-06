@@ -271,8 +271,8 @@
             <label for="glimit">Limit przeciążenia na najeździe</label>
             <output id="glimit-out">1.5<small>g</small></output>
           </div>
-          <input type="range" id="glimit" min="1.2" max="2.0" step="0.1" value="1.5">
-          <div class="slider-hint">promień min. klotoidy r = v²/(limit × 9,81) — Trailism: v²/14,7 przy 1,5 g</div>
+          <input type="range" id="glimit" min="1.2" max="2.5" step="0.1" value="1.5">
+          <div class="slider-hint">stałe przeciążenie na całym przejściu; promień maleje, gdy rower zwalnia pod górę (przy wjeździe r = v²/(limit×9,81) — Trailism: v²/14,7). Realne lipy dirt bywają ciaśniejsze (2–2,5 g)</div>
         </div>
         <div class="slider-row">
           <div class="slider-head">
@@ -298,7 +298,7 @@
         <div class="res flight"><div class="lbl">Kąt zeskoku w miejscu lądowania</div><div class="val" id="r-langle"></div></div>
         <div class="res geo"><div class="lbl">Wysokość wybicia</div><div class="val" id="r-lip"></div></div>
         <div class="res geo"><div class="lbl">Długość stołu (blat)</div><div class="val" id="r-table"></div></div>
-        <div class="res geo"><div class="lbl">Promień min. przejścia</div><div class="val" id="r-radius"></div></div>
+        <div class="res geo"><div class="lbl">Promień przejścia (wjazd → lipa)</div><div class="val" id="r-radius"></div></div>
         <div class="res geo"><div class="lbl">Długość zeskoku (w poziomie)</div><div class="val" id="r-landlen"></div></div>
         <div class="res geo wide"><div class="lbl">Ziemia do przerzucenia (na 1 m szerokości)</div><div class="val" id="r-vol"></div></div>
       </div>
@@ -356,30 +356,27 @@
 
   /* ================= MODEL FIZYCZNY ================= */
 
-  // Najazd: para klotoid (Trailism preferuje czystą klotoidę — dwukrotnie dłuższą
-  // od łuku o tym samym promieniu). Krzywizna 0 → 1/r → 0, łączny obrót θ, potem prosta rampa.
+  // Najazd: przejście o STAŁYM przeciążeniu normalnym a·g. Rower zwalnia
+  // wjeżdżając w górę, więc promień maleje razem z prędkością (kształt
+  // klotoidalny — dokładnie to, co zaleca Trailism); przy stałej prędkości
+  // redukuje się do łuku r = v²/14,7. Wzory narciarskie zakładają stałą
+  // prędkość na przejściu (tam najazd zjeżdża w dół) — dla roweru na
+  // płaskim to zawyżało najazd ~2×.
   function buildTakeoff(vApr, th, aMaxG, tRamp) {
-    const r = vApr * vApr / (aMaxG * G);      // r_min = v²/(a·g); Trailism v²/14,7
-    const xi = th / 2;                        // obrót na każdej z dwóch klotoid
-    const s1 = 2 * xi * r;                    // długość klotoidy (A² = s·r)
-    const A2 = s1 * r;
     const pts = [[0, 0]];
-    let x = 0, y = 0;
-    const N = 60, ds = s1 / N;
-    for (let i = 0; i < N; i++) {             // klotoida wejściowa
-      const sm = (i + 0.5) * ds;
-      const a = sm * sm / (2 * A2);
-      x += Math.cos(a) * ds; y += Math.sin(a) * ds;
-      pts.push([x, y]);
-    }
-    for (let i = 0; i < N; i++) {             // klotoida wyjściowa (lustrzana)
-      const sm = (i + 0.5) * ds;
-      const rem = s1 - sm;
-      const a = th - rem * rem / (2 * A2);
-      x += Math.cos(a) * ds; y += Math.sin(a) * ds;
+    let x = 0, y = 0, ang = 0, v2 = vApr * vApr;
+    const ds = 0.02;
+    let guard = 0;
+    while (ang < th && guard++ < 30000) {
+      v2 = Math.max(vApr * vApr - 2 * G * y, 0.4);
+      const kappa = aMaxG * G / v2;           // κ = a·g / v²  (stałe przeciążenie)
+      ang = Math.min(ang + kappa * ds, th);
+      x += Math.cos(ang) * ds; y += Math.sin(ang) * ds;
       pts.push([x, y]);
     }
     const transEnd = { x, y };
+    const rEntry = vApr * vApr / (aMaxG * G); // promień na wjeździe (Trailism v²/14,7)
+    const rTop = Math.max(v2, 0.4) / (aMaxG * G); // promień tuż pod rampą
     // Prosta rampa: t × prędkość NA LIPIE (Trailism 0,25 s) — punkt stały iteracyjnie,
     // bo prędkość na lipie zależy od wysokości lipy (strata energii na podjeździe)
     let v0 = vApr, Lramp = 0, H = y;
@@ -391,7 +388,7 @@
     const tooSlow = vApr * vApr - 2 * G * H < 1.0;
     const lip = { x: x + Lramp * Math.cos(th), y: H };
     pts.push([lip.x, lip.y]);
-    return { pts, r, s1, lip, H, v0, Lramp, tooSlow, transEnd };
+    return { pts, r: rTop, rEntry, rTop, lip, H, v0, Lramp, tooSlow, transEnd };
   }
 
   // Zeskok o stałym EFH — Levy et al. 2015, Eq. 11.
@@ -686,7 +683,7 @@
     svgEl("text", {
       x: sc.X(kx), y: sc.Y(heightAt(world.pts, kx)) - 12,
       "text-anchor": "middle", "font-size": 12.5, "font-weight": 600, fill: "#8a5f33",
-    }, sc.svg).textContent = "klotoida r=" + fmt(m.takeoff.r, 1) + " m";
+    }, sc.svg).textContent = `przejście ${fmt(m.aMaxG, 1)} g · r ${fmt(m.takeoff.rEntry, 1)}→${fmt(m.takeoff.rTop, 1)} m`;
 
     el("tech-note").textContent = `konstrukcja: ${fmt(x1t - 0.4, 1)} m długości`;
   }
@@ -760,7 +757,7 @@
     el("r-langle").innerHTML = fmt(m.landAngleDeg, 0) + "<small>°</small>";
     el("r-lip").innerHTML = fmt(m.H) + " <small>m</small>";
     el("r-table").innerHTML = fmt(m.xk, 1) + " <small>m</small>";
-    el("r-radius").innerHTML = fmt(m.takeoff.r, 1) + " <small>m</small>";
+    el("r-radius").innerHTML = fmt(m.takeoff.rEntry, 1) + " → " + fmt(m.takeoff.rTop, 1) + " <small>m</small>";
     el("r-landlen").innerHTML = fmt(m.land.endX - m.xk, 1) + " <small>m</small>";
 
     el("speed-out").innerHTML = m.vKmh + "<small>km/h</small>";

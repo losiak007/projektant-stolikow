@@ -9,9 +9,14 @@ liczy pełną geometrię skoczni i parametry lotu — tak, żeby dało się świ
 
 ## Model fizyczny
 
-- **Najazd**: para klotoid (krzywizna 0 → 1/r → 0) z promieniem minimalnym `r = v²/(limit × g)`
-  (Trailism: v²/14,7 przy 1,5 g), po niej **prosta rampa** 0,25 s × prędkość na lipie
-  (Trailism/FIS; USTPC zaleca 0,3 s). Klotoida eliminuje skok przeciążenia (jerk / "buck").
+- **Najazd**: przejście o **stałym przeciążeniu normalnym** `a·g` — krzywizna `κ = a·g/v²`
+  rośnie w miarę jak rower zwalnia pod górę, więc promień maleje od `v²/14,7` na wjeździe
+  (Trailism, 1,5 g) do wartości najmniejszej pod lipą. To naturalnie daje klotoidalny,
+  progresywny kształt lipy. Po przejściu **prosta rampa** 0,25 s × prędkość na lipie
+  (Trailism/FIS; USTPC zaleca 0,3 s).
+  *Uwaga: wzory z literatury narciarskiej zakładają stałą prędkość na przejściu (tam najazd
+  zjeżdża w dół) — dla roweru wjeżdżającego z płaskiego zawyżało to najazd ~2×, co
+  poprawiono (patrz `tools/selfeval.js`).*
 - **Strata prędkości na podjeździe**: prędkość na lipie `v₀ = √(v² − 2gH)` — H i v₀ liczone
   iteracyjnie (Trailism: "speed loss to gravity").
 - **Zeskok o stałym EFH**: powierzchnia całkowana numerycznie z równania (11) pracy
@@ -33,6 +38,17 @@ liczy pełną geometrię skoczni i parametry lotu — tak, żeby dało się świ
 - [IMBA Canada — Building a Dirt Jump / Freeride Park](https://imbacanada.com/building-a-dirt-jump-or-freeride-park/)
 - [Lee Likes Bikes — Formulas for building jumps](https://www.leelikesbikes.com/formulas-for-building-jumps.html)
 - [mtbr — dirt jumps specs](https://www.mtbr.com/threads/dirt-jumps-specs.599573/) — realne wymiary lip wg poziomu
+
+## Weryfikacja modelu
+
+`node tools/selfeval.js` — porównuje model z kotwicami rzeczywistości:
+
+- **Lee Likes Bikes** (lot przy 15 mph na lipie): 35° → 14 ft / 2,5 ft, 45° → 15 ft / 3,8 ft,
+  55° → 14 ft / 5 ft — model trafia co do dziesiątej stopy.
+- **mtbr (realne lipy)**: 25 km/h / 30° → H ≈ 1,0 m (mtbr: ~3 ft), 28 km/h / 60° → H ≈ 2,3 m
+  (mtbr pro: 6–7 ft).
+- 40 km/h / 55° → wjazd możliwy (v na lipie ~24 km/h, lot ~5 m) — stary model z „narciarskim"
+  założeniem stałej prędkości dawał tu absurdalne 7 m wysokości i błąd.
 
 ## Rozwój
 
