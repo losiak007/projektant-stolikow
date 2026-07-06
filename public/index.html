@@ -302,7 +302,7 @@
             <output id="drop-out">0.20<small>m</small></output>
           </div>
           <input type="range" id="drop" min="0" max="0.5" step="0.05" value="0.2">
-          <div class="slider-hint">blat opada łagodnie od lipy do knuckla — lot liczony z wysokości lipy do poziomu knuckla (dłuższy niż „na płasko”)</div>
+          <div class="slider-hint">blat opada łagodnie od lipy do knuckla (lot liczony do poziomu knuckla); narzędzie ogranicza pochylenie blatu do ~4°, więc przy krótkim stole realny spadek jest mniejszy niż suwak</div>
         </div>
         <div class="slider-row">
           <div class="slider-head">
@@ -574,7 +574,7 @@
     const aMaxG = +inputs.glimit.value;
     const tRamp = +inputs.teq.value;
 
-    const drop = +inputs.drop.value;
+    const dropIn = +inputs.drop.value;
     const wb = +inputs.wb.value;
 
     const to = buildTakeoff(vApr, th, aMaxG, tRamp);
@@ -593,6 +593,11 @@
       thEff = Math.max(5 * RAD, Math.atan2(to.lip.y - p[i][1], to.lip.x - p[i][0]));
     }
     const vx = v0 * Math.cos(thEff), vy = v0 * Math.sin(thEff);
+
+    // spadek blatu ograniczony do ~4° pochylenia — krótki stół dostaje
+    // proporcjonalnie mniejszy spadek (inaczej blat wygląda jak zjazd)
+    const xSweet0 = vx * 2 * vy / G;
+    const drop = Math.min(dropIn, Math.max(xSweet0, 1.2) * Math.tan(4 * RAD));
 
     // blat = dystans lotu przy prędkości projektowej (IMBA/mtbr: gap ≈ lot),
     // liczony z wysokości lipy do poziomu blatu (lipa wystaje o `drop`);
