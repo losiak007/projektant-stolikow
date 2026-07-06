@@ -7,6 +7,18 @@ liczy pełną geometrię skoczni i parametry lotu — tak, żeby dało się świ
 
 **Live:** https://stoliki.pages.dev
 
+## Narzędzia (zakładki)
+
+1. **🟫 Projekt skoczni** — pełny stolik/gap z presetami, tabelą tyczenia i symulacją
+   (wachlarz prędkości + wkład ridera: boost +3 mph / squash −5 mph wg Trailism).
+2. **📐 Wybicie (kicker)** — sam najazd: prędkość (najazdu albo na lipie) + kąt + limit g
+   → promień, długości, wysokość; porównanie z czystym łukiem.
+3. **🎯 Symulator lotu** — prędkość na lipie + kąt + wysokość lipy → dystans/wysokość/czas,
+   zakres boost/squash i krzywa z oporem powietrza (model z kalkulatora Desmos Trailism;
+   przy prędkościach MTB opór to ~1–2 %).
+4. **📏 Pomiar szablonem** — łata + strzałka ugięcia → promień istniejącej hopki
+   (R = h/2 + c²/8h), maks. prędkości dla 1,5/2 g, klasyfikacja wg Cutlaps.
+
 ## Funkcje
 
 - **Typ skoczni**: stolik (tabletop) albo gap — gap = ta sama fizyka, ale otwarta dziura
@@ -59,6 +71,12 @@ liczy pełną geometrię skoczni i parametry lotu — tak, żeby dało się świ
 - [Lee Likes Bikes — Formulas for building jumps](https://www.leelikesbikes.com/formulas-for-building-jumps.html)
 - [mtbr — dirt jumps specs](https://www.mtbr.com/threads/dirt-jumps-specs.599573/) — realne wymiary lip wg poziomu
 - [Cutlaps Trajectory Calculator](https://www.cutlaps.com) — rowerowy kalkulator trajektorii; promienie najazdu: BMX 2,4–3,0 m, dirt 3,0–4,0 m, full-sus 4,0–6,1 m
+- [Kalkulator Desmos Trailism](https://www.desmos.com/calculator/jjphayymiy) — trajektoria z oporem powietrza (masy 10,6+80,6 kg, Av·Cv=0,36, Ah·Ch=0,525); nasz lot zgadza się z tabelą Trailism co do 0,01 ft (patrz `tools/selfeval.js`, kotwice 7–9)
+
+Konwencja prędkości: Trailism wymiaruje promień prędkością NA LIPIE, narzędzie — prędkością
+najazdu (większy promień = bezpieczniej); w toolu „Wybicie" można przełączyć obie konwencje.
+Tabela „Ramp heights for circular transitions" z materiałów Trailism to liniowa reguła kciuka
+(h = R·θ/90°) — pomijamy ją świadomie na rzecz dokładnej integracji.
 
 Metryka EFH (equivalent fall height) używana jako kontrola bezpieczeństwa lądowania — za Trailism
 (limit 1,5 m / 4,9 ft). Literatura narciarska (Hubbard/Levy/McNeil) świadomie pominięta jako źródło

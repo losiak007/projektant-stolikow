@@ -124,6 +124,24 @@
   .presets button:hover { background: #e6e0d0; }
   .presets button.active { background: var(--forest); color: #fff; }
 
+  /* --- Zakładki narzędzi --- */
+  .tools-nav {
+    max-width: 1280px;
+    margin: 18px auto -6px;
+    padding: 0 24px;
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .tools-nav button {
+    border: none; background: #e9e4d6;
+    padding: 10px 16px; border-radius: 10px;
+    font-size: 14px; font-weight: 700; color: #55524a; cursor: pointer;
+  }
+  .tools-nav button:hover { background: #ded8c6; }
+  .tools-nav button.active { background: var(--forest); color: #fff; }
+  .tool-pane[hidden] { display: none !important; }
+  .pane-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+  @media (max-width: 980px) { .pane-grid { grid-template-columns: 1fr; } }
+
   details.advanced { margin-top: 16px; border-top: 1px dashed #ddd8cc; padding-top: 12px; }
   details.advanced summary {
     cursor: pointer;
@@ -224,8 +242,15 @@
      bezpiecznie na stole) i zeskok odrobinę stromszy niż lipa. Fizyka rowerowa wg Trailism, Lee Likes Bikes, IMBA i mtbr.</p>
 </header>
 
+<nav class="tools-nav no-print">
+  <button data-pane="design" class="active">🟫 Projekt skoczni</button>
+  <button data-pane="kicker">📐 Wybicie (kicker)</button>
+  <button data-pane="fly">🎯 Symulator lotu</button>
+  <button data-pane="measure">📏 Pomiar szablonem</button>
+</nav>
+
 <main>
-  <div style="display:flex; flex-direction:column; gap:20px; min-width:0;">
+  <div class="tool-pane tp-design" style="display:flex; flex-direction:column; gap:20px; min-width:0;">
     <section class="card">
       <h2>Rysunek techniczny stolika</h2>
       <div id="stage-tech"></div>
@@ -238,13 +263,13 @@
       <h2>Widok poglądowy — symulacja lotu</h2>
       <div id="stage-sim"></div>
       <div class="stage-footer">
-        <span>trajektorie: 65 / 80 / 90 / 100 % prędkości projektowej</span>
+        <span>trajektorie: 65–100 % prędkości · <span style="color:#3d8b37">boost +3 mph</span> · <span style="color:#b04a3a">squash −5 mph</span> (Trailism)</span>
         <span id="scale-note"></span>
       </div>
     </section>
   </div>
 
-  <div>
+  <div class="tool-pane tp-design">
     <section class="card no-print">
       <h2>Parametry wejściowe</h2>
 
@@ -320,6 +345,7 @@
       <div id="badge"></div>
       <div class="results">
         <div class="res flight wide"><div class="lbl">Długość lotu (lipa → przyziemienie na zeskoku)</div><div class="val" id="r-dist"></div></div>
+        <div class="res flight wide"><div class="lbl">Zakres z wkładem ridera (squash −5 mph … boost +3 mph)</div><div class="val" id="r-boost"></div></div>
         <div class="res flight"><div class="lbl">Wysokość lotu nad blatem</div><div class="val" id="r-hdeck"></div></div>
         <div class="res flight"><div class="lbl">Maks. wysokość nad gruntem</div><div class="val" id="r-hmax"></div></div>
         <div class="res flight"><div class="lbl">Czas lotu</div><div class="val" id="r-time"></div></div>
@@ -338,7 +364,7 @@
     </section>
   </div>
 
-  <section class="card sources" id="koparka">
+  <section class="card sources tool-pane tp-design" id="koparka">
     <h2>Dla koparki — tabela tyczenia (build file)</h2>
     <p style="font-size:12.5px; color:var(--muted); margin-bottom:10px;">
       Wysokość nasypu nad gruntem co 0,5 m wzdłuż osi skoczni (x = 0 to początek najazdu).
@@ -346,6 +372,114 @@
     </p>
     <div class="stakeout-wrap"><table class="stakeout" id="stakeout"></table></div>
     <button class="print-btn" onclick="window.print()">🖨 Drukuj kartę budowy</button>
+  </section>
+
+  <!-- ================= TOOL: WYBICIE (KICKER) ================= -->
+  <section class="card sources tool-pane tp-kicker" hidden>
+    <h2>📐 Wybicie (kicker) — projekt samego najazdu</h2>
+    <div class="pane-grid">
+      <div>
+        <div id="kicker-stage"></div>
+        <div class="stage-footer"><span>siatka: 1 m · przejście o stałym przeciążeniu + rampa 0,25 s (Trailism)</span><span id="kicker-note"></span></div>
+      </div>
+      <div>
+        <div class="presets"><div class="grp" id="k-vmode">
+          <button data-v="apr" class="active">prędkość najazdu</button>
+          <button data-v="lip">prędkość na lipie</button>
+        </div></div>
+        <div class="slider-row">
+          <div class="slider-head"><label for="k-speed">Prędkość</label><output id="k-speed-out">24<small>km/h</small></output></div>
+          <input type="range" id="k-speed" min="8" max="45" step="1" value="24">
+        </div>
+        <div class="slider-row">
+          <div class="slider-head"><label for="k-angle">Kąt lipy</label><output id="k-angle-out">30<small>°</small></output></div>
+          <input type="range" id="k-angle" min="15" max="60" step="1" value="30">
+        </div>
+        <div class="slider-row">
+          <div class="slider-head"><label for="k-glimit">Limit przeciążenia</label><output id="k-glimit-out">1.5<small>g</small></output></div>
+          <input type="range" id="k-glimit" min="0.8" max="2.5" step="0.1" value="1.5">
+          <div class="slider-hint">Trailism wymiaruje r prędkością na lipie, my najazdu (bezpieczniej) — przełącz tryb powyżej, by porównać</div>
+        </div>
+        <div class="results" style="margin-top:16px">
+          <div class="res geo"><div class="lbl">Wysokość wybicia H</div><div class="val" id="r-k-h"></div></div>
+          <div class="res geo"><div class="lbl">Promień (wjazd → lipa)</div><div class="val" id="r-k-r"></div></div>
+          <div class="res geo"><div class="lbl">Długość najazdu (poziomo)</div><div class="val" id="r-k-len"></div></div>
+          <div class="res geo"><div class="lbl">W tym rampa prosta</div><div class="val" id="r-k-ramp"></div></div>
+          <div class="res flight"><div class="lbl">Prędkość na lipie</div><div class="val" id="r-k-vlip"></div></div>
+          <div class="res geo"><div class="lbl">Gdyby czysty łuk (stała v)</div><div class="val" id="r-k-circ"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TOOL: SYMULATOR LOTU ================= -->
+  <section class="card sources tool-pane tp-fly" hidden>
+    <h2>🎯 Symulator lotu — ile polecę</h2>
+    <div class="pane-grid">
+      <div>
+        <div id="fly-stage"></div>
+        <div class="stage-footer"><span><span style="color:#d97b29">lot</span> · <span style="color:#3d8b37">boost +3 mph</span> · <span style="color:#b04a3a">squash −5 mph</span> · <span style="color:#444">z oporem powietrza</span></span><span id="fly-note"></span></div>
+      </div>
+      <div>
+        <div class="slider-row">
+          <div class="slider-head"><label for="f-speed">Prędkość NA LIPIE</label><output id="f-speed-out">27<small>km/h</small></output></div>
+          <input type="range" id="f-speed" min="10" max="50" step="1" value="27">
+          <div class="slider-hint">zmierz GPS-em/licznikiem tuż przed wybiciem (Trailism: GPS, stoper, Speedclock)</div>
+        </div>
+        <div class="slider-row">
+          <div class="slider-head"><label for="f-angle">Kąt wybicia</label><output id="f-angle-out">30<small>°</small></output></div>
+          <input type="range" id="f-angle" min="10" max="60" step="1" value="30">
+        </div>
+        <div class="slider-row">
+          <div class="slider-head"><label for="f-h">Lipa nad lądowaniem</label><output id="f-h-out">0.5<small>m</small></output></div>
+          <input type="range" id="f-h" min="0" max="3" step="0.1" value="0.5">
+          <div class="slider-hint">0 = lądowanie na poziomie lipy; np. wysokość lipy nad dnem gapa</div>
+        </div>
+        <div class="results" style="margin-top:16px">
+          <div class="res flight wide"><div class="lbl">Dystans lotu</div><div class="val" id="r-f-dist"></div></div>
+          <div class="res flight wide"><div class="lbl">Zakres z wkładem ridera (squash … boost)</div><div class="val" id="r-f-boost"></div></div>
+          <div class="res flight"><div class="lbl">Wysokość nad lipą</div><div class="val" id="r-f-height"></div></div>
+          <div class="res flight"><div class="lbl">Czas lotu</div><div class="val" id="r-f-time"></div></div>
+          <div class="res geo wide"><div class="lbl">Z oporem powietrza (model Desmos/Trailism)</div><div class="val" id="r-f-drag"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TOOL: POMIAR SZABLONEM ================= -->
+  <section class="card sources tool-pane tp-measure" hidden>
+    <h2>📏 Pomiar szablonem — promień istniejącej hopki</h2>
+    <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">
+      Przyłóż prostą łatę do najazdu i zmierz strzałkę ugięcia (prześwit w połowie łaty).
+      Wzór Trailism: R = h/2 + c²/8h.
+    </p>
+    <div class="pane-grid">
+      <div>
+        <div id="measure-stage"></div>
+      </div>
+      <div>
+        <div class="slider-row">
+          <div class="slider-head"><label for="m-c">Długość łaty (cięciwa c)</label><output id="m-c-out">127<small>cm</small></output></div>
+          <input type="range" id="m-c" min="60" max="250" step="1" value="127">
+          <div class="slider-hint">127 cm = 50″ jak w szablonie Trailism</div>
+        </div>
+        <div class="slider-row">
+          <div class="slider-head"><label for="m-h">Strzałka ugięcia h</label><output id="m-h-out">6.0<small>cm</small></output></div>
+          <input type="range" id="m-h" min="0.5" max="25" step="0.5" value="6">
+        </div>
+        <div class="slider-row">
+          <div class="slider-head"><label for="m-v">Prędkość ridera</label><output id="m-v-out">25<small>km/h</small></output></div>
+          <input type="range" id="m-v" min="10" max="40" step="1" value="25">
+        </div>
+        <div class="results" style="margin-top:16px">
+          <div class="res geo wide"><div class="lbl">Promień przejścia R</div><div class="val" id="r-m-r"></div></div>
+          <div class="res flight"><div class="lbl">Maks. prędkość (1,5 g)</div><div class="val" id="r-m-v15"></div></div>
+          <div class="res flight"><div class="lbl">Maks. prędkość (2 g)</div><div class="val" id="r-m-v20"></div></div>
+          <div class="res flight wide"><div class="lbl">Przeciążenie przy zadanej prędkości</div><div class="val" id="r-m-g"></div></div>
+          <div class="res geo wide"><div class="lbl">Klasyfikacja promienia (Cutlaps)</div><div class="val" id="r-m-class"></div></div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section class="card sources no-print">
@@ -621,6 +755,12 @@
     });
     const main = family[family.length - 1];
 
+    // wkład ridera (Trailism): boost do +3 mph (pompowanie), squash do −5 mph
+    const MPH = 0.44704;
+    const vBoost = v0 + 3 * MPH, vSquash = Math.max(v0 - 5 * MPH, 0.5);
+    const boost = { v: vBoost, imp: impactOnSurface(vBoost * Math.cos(thEff), vBoost * Math.sin(thEff), shortY, land.pts, xk, faceStart) };
+    const squash = { v: vSquash, imp: impactOnSurface(vSquash * Math.cos(thEff), vSquash * Math.sin(thEff), shortY, land.pts, xk, faceStart) };
+
     const tLand = main.imp.x / vx;
     const hOverDeck = vy * vy / (2 * G) + drop;       // apex nad poziomem knuckla
     // EFH jako KONTROLA bezpieczeństwa (Trailism: limit ~4,9 ft / 1,5 m):
@@ -634,7 +774,7 @@
     return {
       vKmh, vApr, v0, thetaDeg, th, thEff, drop, wb, vx, vy, aMaxG, tRamp,
       type: jumpType, faceStart,
-      takeoff: to, H, xk, land, family, main,
+      takeoff: to, H, xk, land, family, main, boost, squash,
       tLand, hOverDeck, hMax: H + vy * vy / (2 * G),
       flightDist: main.imp.x,
       impactEfh, caseEfh,
@@ -859,26 +999,29 @@
     const yTop = Math.max(m.hMax + 0.5, m.H + 0.5, 1.5);
     const sc = makeScene("stage-sim", world.pts, world.startX, world.endX, yTop, 56);
 
-    for (const tr of m.family) {
-      const isMain = tr.f === 1.0;
+    function drawTraj(v, imp, color, width, opacity, dotR) {
       const nn = 60, p = [];
       for (let i = 0; i <= nn; i++) {
-        const xx = tr.imp.x * i / nn;
-        const yy = xx * Math.tan(m.thEff) - G * xx * xx / (2 * tr.v * tr.v * Math.cos(m.thEff) ** 2);
+        const xx = imp.x * i / nn;
+        const yy = xx * Math.tan(m.thEff) - G * xx * xx / (2 * v * v * Math.cos(m.thEff) ** 2);
         p.push((i ? "L" : "M") + sc.X(lipX + xx).toFixed(1) + " " + sc.Y(m.H + yy).toFixed(1));
       }
       svgEl("path", {
-        d: p.join(" "), fill: "none",
-        stroke: isMain ? "#d97b29" : "#d9a86e",
-        "stroke-width": isMain ? 2.5 : 1.4,
-        opacity: isMain ? 1 : 0.65,
-        "stroke-dasharray": "7 6", "stroke-linecap": "round",
+        d: p.join(" "), fill: "none", stroke: color, "stroke-width": width,
+        opacity, "stroke-dasharray": "7 6", "stroke-linecap": "round",
       }, sc.svg);
       svgEl("circle", {
-        cx: sc.X(lipX + tr.imp.x), cy: sc.Y(m.H + tr.imp.y), r: isMain ? 5 : 3.5,
-        fill: isMain ? "#c94f3d" : "#d9a86e", stroke: "#fff", "stroke-width": isMain ? 2 : 1.2,
+        cx: sc.X(lipX + imp.x), cy: sc.Y(m.H + imp.y), r: dotR,
+        fill: color, stroke: "#fff", "stroke-width": dotR > 4 ? 2 : 1.2,
       }, sc.svg);
     }
+    for (const tr of m.family) {
+      const isMain = tr.f === 1.0;
+      drawTraj(tr.v, tr.imp, isMain ? "#d97b29" : "#d9a86e", isMain ? 2.5 : 1.4, isMain ? 1 : 0.65, isMain ? 5 : 3.5);
+    }
+    // wkład ridera (Trailism): boost +3 mph / squash −5 mph
+    drawTraj(m.boost.v, m.boost.imp, "#3d8b37", 1.6, 0.8, 3.5);
+    drawTraj(m.squash.v, m.squash.imp, "#b04a3a", 1.6, 0.7, 3.5);
     svgEl("circle", { cx: sc.X(lipX), cy: sc.Y(m.H), r: 5, fill: "#d97b29", stroke: "#fff", "stroke-width": 2 }, sc.svg);
 
     const dim = dimTools(sc);
@@ -914,12 +1057,16 @@
         `<span>Za wolno — lądowanie w dziurze<small>tor projektowy nie dolatuje do lądowania — zwiększ prędkość albo zmniejsz gap</small></span></div>`
       : `<div class="badge medium"><span style="font-size:18px">⚠️</span>` +
         `<span>Lądowanie wypada na blacie<small>bezpieczne na stoliku, ale mało płynne — zwiększ prędkość</small></span></div>`;
+    if (m.boost.imp.past) html +=
+      `<div class="badge medium"><span style="font-size:18px">⚠️</span>` +
+      `<span>Boost przelatuje zeskok<small>rider pompujący lipę (+3 mph) ląduje za zeskokiem — rozważ dłuższy zeskok albo mniejszą prędkość projektową</small></span></div>`;
     if (m.main.imp.onFace) html +=
       `<div class="badge booter"><span style="font-size:18px">⛔</span>` +
       `<span>Uderzenie w ścianę lądowania<small>tor projektowy trafia w czoło zeskoku — zwiększ prędkość albo zmniejsz gap</small></span></div>`;
     el("badge").innerHTML = html;
 
     el("r-dist").innerHTML = fmt(m.flightDist) + " <small>m</small>";
+    el("r-boost").innerHTML = fmt(m.squash.imp.x, 1) + " – " + fmt(m.boost.imp.x, 1) + " <small>m (Trailism: rider input)</small>";
     el("r-hdeck").innerHTML = fmt(m.hOverDeck) + " <small>m</small>";
     el("r-hmax").innerHTML = fmt(m.hMax) + " <small>m</small>";
     el("r-time").innerHTML = fmt(m.tLand) + " <small>s</small>";
@@ -963,6 +1110,164 @@
     el("stakeout").innerHTML = rows;
     el("r-vol").innerHTML = "~" + fmt(vol, 1) + " <small>m³</small>";
   }
+
+  /* ================= TOOL: WYBICIE (KICKER) ================= */
+  function renderKicker() {
+    const mode = document.querySelector("#k-vmode button.active").dataset.v;
+    const vIn = +el("k-speed").value / 3.6;
+    const th = +el("k-angle").value * RAD;
+    const aG = +el("k-glimit").value;
+    let vApr = vIn;
+    if (mode === "lip")                                  // iteracja: prędkość najazdu z prędkości na lipie
+      for (let i = 0; i < 8; i++) vApr = Math.sqrt(vIn * vIn + 2 * G * buildTakeoff(vApr, th, aG, 0.25).H);
+    const to = buildTakeoff(vApr, th, aG, 0.25);
+    const pts = [[-1.2, 0]];
+    for (const p of to.pts) pts.push(p);
+    pts.push([to.lip.x + 0.02, 0]);                      // tylna ścianka kickera
+    pts.push([to.lip.x + 1.0, 0]);
+    const sc = makeScene("kicker-stage", pts, -1.2, to.lip.x + 1.0, Math.max(to.H * 1.25, 1.2), 64);
+    const dim = dimTools(sc);
+    dim(sc.X(to.lip.x) + 14, sc.Y(0), sc.X(to.lip.x) + 14, sc.Y(to.H), `H = ${fmt(to.H)} m`, 10, 4, "start");
+    dim(sc.X(0), sc.Y(0) + 24, sc.X(to.lip.x), sc.Y(0) + 24, `podstawa ${fmt(to.lip.x, 2)} m`, 0, 16);
+    const cx = sc.X(to.lip.x), cy = sc.Y(to.H), Ra = 44;
+    svgEl("line", { x1: cx - Ra - 14, y1: cy, x2: cx, y2: cy, stroke: "#c94f3d", "stroke-width": 1.2, "stroke-dasharray": "4 3" }, sc.svg);
+    svgEl("path", { d: `M ${cx - Ra} ${cy} A ${Ra} ${Ra} 0 0 1 ${(cx - Ra * Math.cos(th)).toFixed(1)} ${(cy + Ra * Math.sin(th)).toFixed(1)}`, fill: "none", stroke: "#c94f3d", "stroke-width": 1.6 }, sc.svg);
+    svgEl("text", { x: cx - (Ra + 22) * Math.cos(th / 2), y: cy + (Ra + 22) * Math.sin(th / 2) + 4, "text-anchor": "middle", "font-size": 14, "font-weight": 700, fill: "#c94f3d" }, sc.svg).textContent = el("k-angle").value + "°";
+    el("kicker-note").textContent = `najazd ${fmt(vApr * 3.6, 1)} km/h → lipa ${fmt(to.v0 * 3.6, 1)} km/h`;
+    el("r-k-h").innerHTML = fmt(to.H) + " <small>m</small>";
+    el("r-k-r").innerHTML = fmt(to.rEntry, 1) + " → " + fmt(to.rTop, 1) + " <small>m</small>";
+    el("r-k-len").innerHTML = fmt(to.lip.x, 2) + " <small>m</small>";
+    el("r-k-ramp").innerHTML = fmt(to.Lramp, 2) + " <small>m (0,25 s)</small>";
+    el("r-k-vlip").innerHTML = fmt(to.v0 * 3.6, 1) + " <small>km/h</small>";
+    const hCirc = to.rEntry * (1 - Math.cos(th)) + to.Lramp * Math.sin(th);
+    el("r-k-circ").innerHTML = "H = " + fmt(hCirc) + " <small>m (łuk r=" + fmt(to.rEntry, 1) + " — wyższy)</small>";
+    el("k-speed-out").innerHTML = el("k-speed").value + "<small>km/h</small>";
+    el("k-angle-out").innerHTML = el("k-angle").value + "<small>°</small>";
+    el("k-glimit-out").innerHTML = fmt(+el("k-glimit").value, 1) + "<small>g</small>";
+  }
+
+  /* ================= TOOL: SYMULATOR LOTU ================= */
+  // model oporu jak w kalkulatorze Desmos Trailism: osobny opór w pionie/poziomie
+  const DRAG = { m: 91.2, kv: 0.5 * 1.225 * 0.4 * 0.9, kh: 0.5 * 1.225 * 0.5 * 1.05 };
+  function flyDrag(v, th, h) {
+    let x = 0, y = h, vx = v * Math.cos(th), vy = v * Math.sin(th);
+    const dt = 0.004, pts = [[0, h]];
+    for (let i = 0; i < 20000; i++) {
+      vx += -(DRAG.kh / DRAG.m) * vx * Math.abs(vx) * dt;
+      vy += (-G - (DRAG.kv / DRAG.m) * vy * Math.abs(vy)) * dt;
+      x += vx * dt; y += vy * dt;
+      pts.push([x, Math.max(y, 0)]);
+      if (y <= 0 && vy < 0) break;
+    }
+    return { dist: x, pts };
+  }
+  function renderFly() {
+    const v = +el("f-speed").value / 3.6, th = +el("f-angle").value * RAD, h = +el("f-h").value;
+    const MPH = 0.44704;
+    const fl = vv => {
+      const vx = vv * Math.cos(th), vy = vv * Math.sin(th);
+      const t = (vy + Math.sqrt(vy * vy + 2 * G * h)) / G;
+      return { dist: vx * t, t, apex: vy * vy / (2 * G) };
+    };
+    const base = fl(v), bo = fl(v + 3 * MPH), sq = fl(Math.max(v - 5 * MPH, 0.5));
+    const dr = flyDrag(v, th, h);
+    const xMax = bo.dist + 1.5;
+    const sc = makeScene("fly-stage", [[-1.2, 0], [xMax, 0]], -1.2, xMax, Math.max(h + base.apex + 0.6, 1.5), 56);
+    svgEl("line", { x1: sc.X(0), y1: sc.Y(0), x2: sc.X(0), y2: sc.Y(h), stroke: "#8a5f33", "stroke-width": 4 }, sc.svg);
+    function tr(o, vv, color, wdt, op) {
+      const n = 70, p = [];
+      const vx2 = (vv * Math.cos(th)) ** 2;
+      for (let i = 0; i <= n; i++) {
+        const xx = o.dist * i / n;
+        const yy = h + Math.tan(th) * xx - G * xx * xx / (2 * vx2);
+        p.push((i ? "L" : "M") + sc.X(xx).toFixed(1) + " " + sc.Y(Math.max(yy, 0)).toFixed(1));
+      }
+      svgEl("path", { d: p.join(" "), fill: "none", stroke: color, "stroke-width": wdt, opacity: op, "stroke-dasharray": "7 6", "stroke-linecap": "round" }, sc.svg);
+      svgEl("circle", { cx: sc.X(o.dist), cy: sc.Y(0), r: 4, fill: color, stroke: "#fff", "stroke-width": 1.5 }, sc.svg);
+    }
+    tr(sq, Math.max(v - 5 * MPH, 0.5), "#b04a3a", 1.6, 0.75);
+    tr(bo, v + 3 * MPH, "#3d8b37", 1.6, 0.8);
+    tr(base, v, "#d97b29", 2.5, 1);
+    const pd = dr.pts.filter((_, i) => i % 25 === 0)
+      .map((p, i) => (i ? "L" : "M") + sc.X(p[0]).toFixed(1) + " " + sc.Y(p[1]).toFixed(1)).join(" ");
+    svgEl("path", { d: pd, fill: "none", stroke: "#444", "stroke-width": 1.3, opacity: 0.8, "stroke-dasharray": "2 4" }, sc.svg);
+    svgEl("circle", { cx: sc.X(0), cy: sc.Y(h), r: 5, fill: "#d97b29", stroke: "#fff", "stroke-width": 2 }, sc.svg);
+    const dim = dimTools(sc);
+    dim(sc.X(0), sc.Y(0) + 24, sc.X(base.dist), sc.Y(0) + 24, `lot ${fmt(base.dist)} m`, 0, 16);
+    el("fly-note").textContent = `maks. wysokość nad lądowaniem: ${fmt(h + base.apex)} m`;
+    el("r-f-dist").innerHTML = fmt(base.dist) + " <small>m</small>";
+    el("r-f-boost").innerHTML = fmt(sq.dist, 1) + " – " + fmt(bo.dist, 1) + " <small>m</small>";
+    el("r-f-height").innerHTML = fmt(base.apex) + " <small>m</small>";
+    el("r-f-time").innerHTML = fmt(base.t) + " <small>s</small>";
+    el("r-f-drag").innerHTML = fmt(dr.dist) + " <small>m (−" + fmt((1 - dr.dist / base.dist) * 100, 1) + " % — opór prawie bez znaczenia)</small>";
+    el("f-speed-out").innerHTML = el("f-speed").value + "<small>km/h</small>";
+    el("f-angle-out").innerHTML = el("f-angle").value + "<small>°</small>";
+    el("f-h-out").innerHTML = fmt(+el("f-h").value, 1) + "<small>m</small>";
+  }
+
+  /* ================= TOOL: POMIAR SZABLONEM ================= */
+  function renderMeasure() {
+    const c = +el("m-c").value / 100, h = +el("m-h").value / 100, vK = +el("m-v").value;
+    const R = h / 2 + c * c / (8 * h);                   // Trailism: R = h/2 + c²/8h
+    const v15 = Math.sqrt(1.5 * G * R) * 3.6, v20 = Math.sqrt(2 * G * R) * 3.6;
+    const gAt = (vK / 3.6) ** 2 / (R * G);
+    let cls;
+    if (R < 2.4) cls = "bardzo ciasny — poniżej widełek BMX";
+    else if (R <= 3.05) cls = "BMX (8–10 ft)";
+    else if (R <= 3.96) cls = "dirt jump (10–13 ft)";
+    else if (R <= 6.1) cls = "full-sus / trail (13–20 ft)";
+    else cls = "bardzo łagodny (> 20 ft)";
+    el("r-m-r").innerHTML = fmt(R) + " <small>m (" + fmt(R * 3.281, 1) + " ft)</small>";
+    el("r-m-v15").innerHTML = fmt(v15, 1) + " <small>km/h</small>";
+    el("r-m-v20").innerHTML = fmt(v20, 1) + " <small>km/h</small>";
+    el("r-m-g").innerHTML = fmt(gAt, 1) + " <small>g przy " + vK + " km/h " + (gAt > 1.5 ? "⚠️ > 1,5 g" : "(OK, ≤ 1,5 g)") + "</small>";
+    el("r-m-class").innerHTML = cls;
+    // diagram: łata na łuku
+    const stage = el("measure-stage");
+    stage.innerHTML = "";
+    const W = 1000, HS = 380;
+    const svg = svgEl("svg", { viewBox: `0 0 ${W} ${HS}` }, stage);
+    svgEl("rect", { x: 0, y: 0, width: W, height: HS, fill: "#eaf4fb", rx: 10 }, svg);
+    const al = Math.asin(Math.min(1, c / (2 * R)));
+    const scale = (W - 220) / c;
+    const cxp = W / 2, cyp = 110;
+    const Cy = cyp - R * Math.cos(al) * scale;
+    const arc = [];
+    for (let i = 0; i <= 60; i++) {
+      const a = -al + 2 * al * i / 60;
+      arc.push((i ? "L" : "M") + (cxp + R * Math.sin(a) * scale).toFixed(1) + " " + (Cy + R * Math.cos(a) * scale).toFixed(1));
+    }
+    svgEl("path", { d: arc.join(" ") + ` L ${cxp + c / 2 * scale} ${HS - 30} L ${cxp - c / 2 * scale} ${HS - 30} Z`, fill: "#b98a55", opacity: 0.35, stroke: "none" }, svg);
+    svgEl("path", { d: arc.join(" "), fill: "none", stroke: "#8a5f33", "stroke-width": 4 }, svg);
+    svgEl("line", { x1: cxp - c / 2 * scale, y1: cyp, x2: cxp + c / 2 * scale, y2: cyp, stroke: "#3d8b37", "stroke-width": 5 }, svg);
+    svgEl("line", { x1: cxp, y1: cyp, x2: cxp, y2: cyp + h * scale, stroke: "#c94f3d", "stroke-width": 2.5 }, svg);
+    const lbl = svgEl("g", { "font-size": 14, "font-weight": 600, fill: "#55524a" }, svg);
+    svgEl("text", { x: cxp, y: cyp - 12, "text-anchor": "middle", fill: "#3d8b37" }, lbl).textContent = `łata c = ${el("m-c").value} cm`;
+    svgEl("text", { x: cxp + 10, y: cyp + h * scale / 2 + 5, "text-anchor": "start", fill: "#c94f3d" }, lbl).textContent = `h = ${fmt(+el("m-h").value, 1)} cm`;
+    svgEl("text", { x: cxp, y: HS - 44, "text-anchor": "middle" }, lbl).textContent = `powierzchnia najazdu · R = ${fmt(R)} m`;
+    el("m-c-out").innerHTML = el("m-c").value + "<small>cm</small>";
+    el("m-h-out").innerHTML = fmt(+el("m-h").value, 1) + "<small>cm</small>";
+    el("m-v-out").innerHTML = el("m-v").value + "<small>km/h</small>";
+  }
+
+  /* ---------- zakładki narzędzi ---------- */
+  document.querySelectorAll(".tools-nav button").forEach(b => {
+    b.addEventListener("click", () => {
+      document.querySelectorAll(".tools-nav button").forEach(x => x.classList.toggle("active", x === b));
+      const pane = b.dataset.pane;
+      document.querySelectorAll(".tool-pane").forEach(s => { s.hidden = !s.classList.contains("tp-" + pane); });
+      if (pane === "kicker") renderKicker();
+      if (pane === "fly") renderFly();
+      if (pane === "measure") renderMeasure();
+    });
+  });
+  document.querySelectorAll("#k-vmode button").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll("#k-vmode button").forEach(x => x.classList.toggle("active", x === b));
+    renderKicker();
+  }));
+  for (const id of ["k-speed", "k-angle", "k-glimit"]) el(id).addEventListener("input", renderKicker);
+  for (const id of ["f-speed", "f-angle", "f-h"]) el(id).addEventListener("input", renderFly);
+  for (const id of ["m-c", "m-h", "m-v"]) el(id).addEventListener("input", renderMeasure);
 
   /* ---------- presety ---------- */
   const levelBtns = document.querySelectorAll("#level-group button");

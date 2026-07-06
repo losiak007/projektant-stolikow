@@ -96,3 +96,40 @@ for (const vK of [20, 27, 33]) {
 console.log("\n[TEST CIĄGŁOŚCI PROFILU] rysunek: w przeglądarce, konsola:");
 console.log("  window.__dbg.world.pts — max skok kąta między segmentami >4 cm ma być < 4°");
 console.log("  (sprawdzone 2026-07: presety 0,4–1,5°, degeneraty ≤ 4,7°, x monotoniczne)");
+
+console.log("\n=== KOTWICA 7: tabela Trailism (rys. 'Ramps on 10% slope', kolumny no-drag) ===");
+const FT = 3.28084, MPH = 0.44704;
+for (const [mph, deg, rangeFt, hFt, boostFt, squashFt] of [
+  [20, 20, 17.19, 1.56, 22.73, 9.67],
+  [16, 45, 17.12, 4.28, 24.14, 8.09],
+  [14, 25, 10.04, 1.17, 14.80, 4.15],
+]) {
+  const v = mph * MPH, th = deg * RAD;
+  const range = v * v * Math.sin(2 * th) / G * FT;
+  const hgt = (v * Math.sin(th)) ** 2 / (2 * G) * FT;
+  const bo = ((v + 3 * MPH) ** 2) * Math.sin(2 * th) / G * FT;
+  const sq = (Math.max(v - 5 * MPH, 0.01) ** 2) * Math.sin(2 * th) / G * FT;
+  console.log(` ${mph} mph/${deg}°: lot ${f(range, 2)} ft (Trailism ${rangeFt}) · h ${f(hgt, 2)} (${hFt})` +
+    ` · boost ${f(bo, 2)} (${boostFt}) · squash ${f(sq, 2)} (${squashFt})`);
+}
+console.log("\n=== KOTWICA 8: r_min z tabeli Trailism (v na lipie, 1,5 g) ===");
+for (const [mph, rFt] of [[12, 6.42], [16, 11.42], [20, 17.84]]) {
+  const r = (mph * MPH) ** 2 / (1.5 * G) * FT;
+  console.log(` ${mph} mph: r = ${f(r, 2)} ft (Trailism ${rFt})`);
+}
+console.log("\n=== KOTWICA 9: opór powietrza (model Desmos: m=91,2, kv=0,2205, kh=0,3216) ===");
+{
+  const m = 91.2, kv = 0.5 * 1.225 * 0.4 * 0.9, kh = 0.5 * 1.225 * 0.5 * 1.05;
+  for (const [vK, deg] of [[40, 25], [30, 30]]) {
+    const v = kmh(vK), th = deg * RAD;
+    let x = 0, y = 0, vx = v * Math.cos(th), vy = v * Math.sin(th);
+    const dt = 0.002;
+    while (!(y <= 0 && vy < 0)) {
+      vx += -(kh / m) * vx * Math.abs(vx) * dt;
+      vy += (-G - (kv / m) * vy * Math.abs(vy)) * dt;
+      x += vx * dt; y += vy * dt;
+    }
+    const noDrag = v * v * Math.sin(2 * th) / G;
+    console.log(` ${vK} km/h/${deg}°: z oporem ${f(x, 2)} m vs ${f(noDrag, 2)} m (−${f((1 - x / noDrag) * 100, 1)} %)`);
+  }
+}
