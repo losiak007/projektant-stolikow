@@ -1382,13 +1382,17 @@
     const tooSlow = e0 < 1.0;
     const v0 = Math.sqrt(Math.max(e0, 0.3));
     const n = vA * vA / (R * G);
-    // kąt efektywny = cięciwa ostatnich `w` metrów powierzchni (jak w computeModel)
-    const chord = w => {
-      let s = 0, i = pts.length - 1;
-      while (i > 0 && s < w) { s += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); i--; }
-      return Math.max(2 * RAD, Math.atan2(lip[1] - pts[i][1], lip[0] - pts[i][0]));
+    // kąt efektywny = cięciwa między KONTAKTAMI kół spoczywających na powierzchni
+    // (przód na lipie); na ciasnym łuku koła mostkują dołek — uczciwa geometria
+    const rw = Math.min(eduRW, 0.45 * wb);
+    const Cf = [lip[0], lip[1] + rw];
+    const eff = w => {
+      const r = restRear(pts, Cf, w, rw);
+      return { th: Math.max(2 * RAD, Math.atan2(lip[1] - r.contact[1], lip[0] - r.contact[0])), rear: r };
     };
-    const thEff = chord(wb), thEffDirt = chord(1.02), thEffEnduro = chord(1.28);
+    const e1 = eff(wb);
+    const thEff = e1.th, rear = e1.rear;
+    const thEffDirt = eff(1.02).th, thEffEnduro = eff(1.28).th;
     const pitch = ramp ? 0 : Math.min(wb / R, th);   // obrót po lipie (tył jeszcze na łuku)
     const omega = ramp ? 0 : v0 / R;                 // tempo obrotu [rad/s]
     const tKick = wb / Math.max(v0, 0.3);
@@ -1404,25 +1408,45 @@
       vA, vKmh: +el("e-speed").value, hs, th, thDeg, wb, ramp, R, pts, lip, H,
       v0, n, tooSlow, thEff, thEffDirt, thEffEnduro, pitch, omega, tKick,
       D: base.D, apex: base.apex, Dbo: bo.D, Dsq: sq.D, arcLen,
+      rw, Cf, rear,
     };
   }
 
-  // punkt kontaktu na powierzchni w odległości `dist` (po łuku) wstecz od końca + kąt styczny
-  function surfContact(pts, dist) {
-    let s = 0, i = pts.length - 1;
-    while (i > 0 && s < dist) { s += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); i--; }
-    const j = Math.min(i + 1, pts.length - 1);
-    return { p: pts[i], a: Math.atan2(pts[j][1] - pts[i][1], pts[j][0] - pts[i][0]) };
+  // najniższe położenie koła (środek nad xc), które SPOCZYWA na powierzchni
+  // bez wnikania w grunt — na ciasnym łuku koło naturalnie "mostkuje" dołek
+  function restWheel(pts, xc, rw) {
+    let y = -1e9, cp = null;
+    for (const p of pts) {
+      const dx = p[0] - xc;
+      if (Math.abs(dx) >= rw) continue;
+      const yy = p[1] + Math.sqrt(rw * rw - dx * dx);
+      if (yy > y) { y = yy; cp = p; }
+    }
+    if (!cp) { y = rw; cp = [xc, 0]; }
+    return { C: [xc, y], contact: cp };
   }
 
-  function drawBike(sc, Pr, aR, Pf, aF, rw) {
+  // środek tylnego koła: spoczywa na powierzchni w odległości `wb` od przedniego
+  function restRear(pts, Cf, wb, rw) {
+    let lo = Cf[0] - wb - rw, hi = Cf[0] - 0.3 * wb, best = null;
+    for (let i = 0; i < 22; i++) {
+      const xc = (lo + hi) / 2;
+      const r = restWheel(pts, xc, rw);
+      const d = Math.hypot(r.C[0] - Cf[0], r.C[1] - Cf[1]);
+      best = r;
+      if (d > wb) lo = xc; else hi = xc;
+    }
+    return best;
+  }
+
+  // czysty rower bez ludzika (jak na rysunkach Trailism) — na środkach kół
+  function drawBike(sc, Cr, Cf, rw) {
     const X = sc.X, Y = sc.Y, S = sc.scale;
-    const Cr = [Pr[0] - rw * Math.sin(aR), Pr[1] + rw * Math.cos(aR)];
-    const Cf = [Pf[0] - rw * Math.sin(aF), Pf[1] + rw * Math.cos(aF)];
     const g = svgEl("g", {}, sc.svg);
     for (const C of [Cr, Cf]) {
-      svgEl("circle", { cx: X(C[0]), cy: Y(C[1]), r: Math.max(rw * S, 4), fill: "none", stroke: "#333", "stroke-width": 2.5 }, g);
-      svgEl("circle", { cx: X(C[0]), cy: Y(C[1]), r: 2.5, fill: "#333" }, g);
+      svgEl("circle", { cx: X(C[0]), cy: Y(C[1]), r: Math.max(rw * S, 4), fill: "none", stroke: "#3a3a35", "stroke-width": 3 }, g);
+      svgEl("circle", { cx: X(C[0]), cy: Y(C[1]), r: Math.max(rw * S * 0.55, 2), fill: "none", stroke: "#3a3a35", "stroke-width": 1, opacity: 0.35 }, g);
+      svgEl("circle", { cx: X(C[0]), cy: Y(C[1]), r: 2.5, fill: "#3a3a35" }, g);
     }
     const phi = Math.atan2(Cf[1] - Cr[1], Cf[0] - Cr[0]);
     const L = Math.hypot(Cf[0] - Cr[0], Cf[1] - Cr[1]);
@@ -1430,19 +1454,15 @@
       Cr[0] + (u * Math.cos(phi) - v * Math.sin(phi)) * L,
       Cr[1] + (u * Math.sin(phi) + v * Math.cos(phi)) * L,
     ];
-    const line = (A, B, w2, col) => svgEl("line", {
+    const line = (A, B, w2) => svgEl("line", {
       x1: X(A[0]), y1: Y(A[1]), x2: X(B[0]), y2: Y(B[1]),
-      stroke: col || "#2f5d2a", "stroke-width": w2 || 3, "stroke-linecap": "round",
+      stroke: "#2f5d2a", "stroke-width": w2 || 3.2, "stroke-linecap": "round", "stroke-linejoin": "round",
     }, g);
-    const BB = pt(0.45, -0.04), head = pt(0.82, 0.42), seat = pt(0.18, 0.42);
-    const bars = pt(0.88, 0.52), sad1 = pt(0.1, 0.47), sad2 = pt(0.24, 0.47);
+    const BB = pt(0.44, -0.02), head = pt(0.80, 0.40), seat = pt(0.20, 0.40);
+    const bars = pt(0.85, 0.50), sad1 = pt(0.13, 0.45), sad2 = pt(0.27, 0.45);
     line(Cr, BB); line(BB, head); line(Cr, seat); line(seat, head); line(head, Cf);
+    line(seat, pt(0.20, 0.44), 3);
     line(sad1, sad2, 4); line(head, bars, 3);
-    // patyczkowy rider (jak na rysunku Trailism): biodra nad siodłem, lekko w tył
-    const hip = pt(0.16, 0.58), knee = pt(0.38, 0.35), shoulder = pt(0.52, 0.86), headC = pt(0.6, 0.97);
-    line(hip, knee, 2.5, "#333"); line(knee, BB, 2.5, "#333");
-    line(hip, shoulder, 2.5, "#333"); line(shoulder, bars, 2.5, "#333");
-    svgEl("circle", { cx: X(headC[0]), cy: Y(headC[1]), r: Math.max(0.055 * L * S, 2.5), fill: "none", stroke: "#333", "stroke-width": 2.5 }, g);
   }
 
   // silnik reguł: priorytet rosnący, max 3 plakietki
@@ -1501,10 +1521,12 @@
 
   function renderEdu() {
     const m = eduModel();
-    const x0 = -(m.wb + 0.9);
-    const x1 = m.lip[0] + Math.max(m.D + 1.5, 3);
+    // kadr skupiony na wybiciu i rowerze; długi lot ucinamy strzałką przy krawędzi
+    const x0 = -(m.wb + 0.7);
+    const flightShow = Math.min(m.D, 6);
+    const x1 = m.lip[0] + Math.max(flightShow + 1.2, 2.2);
     const scenePts = m.pts.concat([[m.lip[0] + 0.02, 0], [x1, 0]]);
-    const yTop = Math.max(m.H + m.apex + 0.7, 1.9);
+    const yTop = Math.max(m.H + Math.min(m.apex, 2.2) + 0.6, m.H + m.rw * 2 + 0.4, 1.6);
     const sc = makeScene("edu-stage", scenePts, x0, x1, yTop, 64);
 
     // styczna lipy (zielona); gdy kąty się pokrywają, jedna wspólna etykieta
@@ -1519,15 +1541,15 @@
       "font-size": 12, "font-weight": 600, fill: "#3d8b37",
     }, sc.svg).textContent = `lipa ${m.thDeg}°`;
 
-    // rower: przód na lipie, tył rozstaw osi wstecz po powierzchni
-    const rear = surfContact(m.pts, m.wb);
-    drawBike(sc, rear.p, rear.a, m.lip, m.th, Math.min(eduRW, 0.35 * m.wb));
+    // rower: koła spoczywają na powierzchni (przód nad lipą)
+    drawBike(sc, m.rear.C, m.Cf, m.rw);
 
-    // czerwona cięciwa = kierunek wybicia (jak na rysunku Trailism)
+    // czerwona cięciwa kontaktów kół = kierunek wybicia (jak na rysunku Trailism)
     svgEl("line", {
-      x1: sc.X(rear.p[0]), y1: sc.Y(rear.p[1]), x2: sc.X(m.lip[0]), y2: sc.Y(m.lip[1]),
+      x1: sc.X(m.rear.contact[0]), y1: sc.Y(m.rear.contact[1]), x2: sc.X(m.lip[0]), y2: sc.Y(m.lip[1]),
       stroke: "#c94f3d", "stroke-width": 2.2,
     }, sc.svg);
+    svgEl("circle", { cx: sc.X(m.rear.contact[0]), cy: sc.Y(m.rear.contact[1]), r: 3, fill: "#c94f3d", stroke: "#fff", "stroke-width": 1.2 }, sc.svg);
     svgEl("line", {
       x1: sc.X(m.lip[0]), y1: sc.Y(m.lip[1]),
       x2: sc.X(m.lip[0] + 1.3 * Math.cos(m.thEff)), y2: sc.Y(m.lip[1] + 1.3 * Math.sin(m.thEff)),
@@ -1543,9 +1565,11 @@
       const vx = v * Math.cos(m.thEff), vy = v * Math.sin(m.thEff);
       const tG = (vy + Math.sqrt(vy * vy + 2 * G * m.H)) / G;
       const p = [];
-      for (let i = 0; i <= 50; i++) {
-        const t = tG * i / 50;
-        p.push((i ? "L" : "M") + sc.X(m.lip[0] + vx * t).toFixed(1) + " " + sc.Y(Math.max(m.lip[1] + vy * t - G / 2 * t * t, 0)).toFixed(1));
+      for (let i = 0; i <= 60; i++) {
+        const t = tG * i / 60;
+        const xx = m.lip[0] + vx * t;
+        if (xx > x1 - 0.05) break;                     // ucinamy na krawędzi kadru
+        p.push((p.length ? "L" : "M") + sc.X(xx).toFixed(1) + " " + sc.Y(Math.max(m.lip[1] + vy * t - G / 2 * t * t, 0)).toFixed(1));
       }
       svgEl("path", { d: p.join(" "), fill: "none", stroke: color, "stroke-width": wdt, opacity: op, "stroke-dasharray": "7 6", "stroke-linecap": "round" }, sc.svg);
     };
@@ -1555,6 +1579,10 @@
       traj(Math.max(m.v0 - 5 * MPH, 0.3), "#b04a3a", 1.3, 0.6);
     }
     traj(m.v0, "#d97b29", 2.4, 1);
+    if (m.D > flightShow + 0.1) svgEl("text", {
+      x: sc.X(x1) - 10, y: sc.Y(0) - 10, "text-anchor": "end",
+      "font-size": 13, "font-weight": 700, fill: "#d97b29",
+    }, sc.svg).textContent = `lot ${fmt(m.D, 1)} m →`;
 
     // wymiar H
     const dim = dimTools(sc);
