@@ -4,8 +4,8 @@
     {
       "name": "stolik-designer",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "http-server", "public", "-p", "8642", "-c-1"],
-      "port": 8642
+      "runtimeArgs": ["--yes", "http-server", "public", "-p", "8653", "-c-1"],
+      "port": 8653
     }
   ]
 }

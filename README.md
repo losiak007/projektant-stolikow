@@ -18,6 +18,11 @@ liczy pełną geometrię skoczni i parametry lotu — tak, żeby dało się świ
    przy prędkościach MTB opór to ~1–2 %).
 4. **📏 Pomiar szablonem** — łata + strzałka ugięcia → promień istniejącej hopki
    (R = h/2 + c²/8h), maks. prędkości dla 1,5/2 g, klasyfikacja wg Cutlaps.
+5. **🎓 Jak to działa** — edukacyjna piaskownica wybicia: rower (BMX/dirt/trail/enduro,
+   regulowany rozstaw osi) na łuku z szablonu; suwasz strzałkę ugięcia/prędkość/kąt,
+   a silnik reguł mówi po ludzku, co się stanie ("będzie kopał przodem", "łagodne, dla
+   każdego", "rower nie mieści się w łuku"). Pokazuje cięciwę kół = prawdziwy kierunek
+   wybicia (Trailism), kopnięcie wb/R, boost/squash i 5 kart zasad.
 
 ## Funkcje
 
