@@ -20,7 +20,9 @@
       "Bash(curl -s https://stoliki.pages.dev/)",
       "Bash(python3 -m json.tool)",
       "Bash(gcloud auth *)",
-      "Bash(gcloud dns *)"
+      "Bash(gcloud dns *)",
+      "Bash(git -c user.name=losiak007 -c user.email=tomek@byss.pl commit -m 'Projektant stolików — interaktywny kalkulator geometrii skoczni MTB *)",
+      "Bash(gh repo *)"
     ]
   }
 }
