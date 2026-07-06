@@ -275,11 +275,11 @@
         </div>
         <div class="slider-row">
           <div class="slider-head">
-            <label for="drop">Lipa ponad blatem</label>
+            <label for="drop">Spadek blatu (lipa → knuckle)</label>
             <output id="drop-out">0.20<small>m</small></output>
           </div>
           <input type="range" id="drop" min="0" max="0.5" step="0.05" value="0.2">
-          <div class="slider-hint">lipa zwykle wystaje nad stół — obniżony blat wydłuża lot (lot liczony z wysokości lipy do poziomu blatu, nie „na płasko”)</div>
+          <div class="slider-hint">blat opada łagodnie od lipy do knuckla — lot liczony z wysokości lipy do poziomu knuckla (dłuższy niż „na płasko”)</div>
         </div>
         <div class="slider-row">
           <div class="slider-head">
@@ -532,22 +532,22 @@
     const startX = -Math.max(3, m.vApr * 0.6);
     pts.push([startX, 0]);
     for (const [x, y] of m.takeoff.pts) pts.push([x, y]);
-    // blat od lipy do knuckla — lipa wystaje nad stół o `drop`
+    // blat opada łagodnie od lipy (H) do knuckla (H − drop) — bez uskoku za lipą
     const deckY = m.H - m.drop;
-    pts.push([lipX + 0.3, deckY]);
     const kRound = Math.min(0.5, m.xk * 0.25);
-    pts.push([lipX + m.xk - kRound, deckY]);
+    pts.push([lipX + m.xk - kRound, m.H - m.drop * (m.xk - kRound) / m.xk]);
     // knuckle: mały bezier styczny do blatu i początku zeskoku
     const i0 = Math.min(25, m.land.pts.length - 1);
     const s0 = m.land.pts[i0];
     const slope0 = Math.atan((s0[1] + m.drop) / (s0[0] - m.xk));
     const u0 = kRound * Math.cos(slope0);
     const bEnd = [lipX + m.xk + u0, deckY + Math.tan(slope0) * u0];
+    const bStartY = m.H - m.drop * (m.xk - kRound) / m.xk;
     for (let i = 1; i <= 8; i++) {
       const u = i / 8, w = 1 - u;
       pts.push([
         w * w * (lipX + m.xk - kRound) + 2 * w * u * (lipX + m.xk) + u * u * bEnd[0],
-        w * w * deckY + 2 * w * u * deckY + u * u * bEnd[1],
+        w * w * bStartY + 2 * w * u * deckY + u * u * bEnd[1],
       ]);
     }
     // zeskok (constant EFH) → świat
@@ -663,7 +663,7 @@
     // wymiary liniowe
     dim(sc.X(lipX) + 16, sc.Y(0), sc.X(lipX) + 16, sc.Y(m.H), `H = ${fmt(m.H)} m`, 12, 4, "start");
     dim(sc.X(0), sc.Y(0) + 26, sc.X(lipX), sc.Y(0) + 26, `najazd ${fmt(lipX, 1)} m`, 0, 18);
-    dim(sc.X(lipX + 0.3), sc.Y(m.H - m.drop) - 16, sc.X(lipX + m.xk), sc.Y(m.H - m.drop) - 16, `stół ${fmt(m.xk, 1)} m`, 0, -8);
+    dim(sc.X(lipX + 0.3), sc.Y(m.H) - 16, sc.X(lipX + m.xk), sc.Y(m.H) - 16, `stół ${fmt(m.xk, 1)} m`, 0, -8);
     dim(sc.X(lipX + m.xk), sc.Y(0) + 26, sc.X(lipX + m.land.endX), sc.Y(0) + 26, `zeskok ${fmt(m.land.endX - m.xk, 1)} m`, 0, 18);
 
     // kąt lipy: łuk między poziomem a rampą (przy lipie)
