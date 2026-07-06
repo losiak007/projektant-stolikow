@@ -540,6 +540,9 @@
         <div class="slider-row">
           <div class="slider-head"><label for="e-sag">Ugięcie łuku (całego wybicia)</label><output id="e-sag-out">20<small>cm</small></output></div>
           <input type="range" id="e-sag" min="0" max="60" step="1" value="20">
+          <div class="presets" style="margin:8px 0 4px"><div class="grp">
+            <button id="e-tangent">⌒ ustaw styczne wejście (0° przy ziemi)</button>
+          </div></div>
           <div class="slider-hint" id="e-sag-hint"></div>
         </div>
         <div class="slider-row">
@@ -555,6 +558,8 @@
           <div class="res flight"><div class="lbl">Wysokość nad lipą</div><div class="val" id="r-e-apex"></div></div>
           <div class="res geo"><div class="lbl">Promień łuku R</div><div class="val" id="r-e-r"></div></div>
           <div class="res geo"><div class="lbl">Kąt lipy (wynik ugięcia)</div><div class="val" id="r-e-h"></div></div>
+          <div class="res geo"><div class="lbl">Długość podstawy</div><div class="val" id="r-e-base"></div></div>
+          <div class="res geo"><div class="lbl">Długość łuku (po ścianie)</div><div class="val" id="r-e-arc"></div></div>
         </div>
       </div>
     </div>
@@ -1630,7 +1635,7 @@
     // wymiary techniczne: wysokość lipy i długość najazdu (podstawa)
     const dim = dimTools(sc);
     dim(sc.X(m.lip[0]) + 14, sc.Y(0), sc.X(m.lip[0]) + 14, sc.Y(m.H), `H = ${fmt(m.H)} m`, 10, 4, "start");
-    dim(sc.X(0), sc.Y(0) + 26, sc.X(m.lip[0]), sc.Y(0) + 26, `najazd ${fmt(m.lip[0], 1)} m`, 0, 17);
+    dim(sc.X(0), sc.Y(0) + 26, sc.X(m.lip[0]), sc.Y(0) + 26, `podstawa ${fmt(m.lip[0], 1)} m`, 0, 17);
     el("edu-note").textContent = `R = ${fmt(m.R, 1)} m · na lipie ${fmt(m.v0 * 3.6, 1)} km/h`;
 
     // werdykty
@@ -1663,6 +1668,8 @@
     el("r-e-dist").innerHTML = fmt(m.D, 1) + " <small>m</small>";
     el("r-e-apex").innerHTML = fmt(m.apex, 1) + " <small>m</small>";
     el("r-e-r").innerHTML = (m.flat ? "∞ (deska)" : fmt(m.R, 1) + " <small>m</small>");
+    el("r-e-base").innerHTML = fmt(m.lip[0], 2) + " <small>m</small>";
+    el("r-e-arc").innerHTML = fmt(m.arcLen, 2) + " <small>m</small>";
     el("r-e-h").innerHTML = fmt(m.thDeg, 0) + "<small>° " +
       (m.flat ? "(= kąt cięciwy)" : `(wejście ${fmt(m.entry / RAD, 0)}°, cięciwa ${fmt(m.alpha / RAD, 0)}°)`) + "</small>";
 
@@ -1696,6 +1703,15 @@
   }));
   el("e-wb").addEventListener("input", () => {
     document.querySelectorAll("#e-bike button").forEach(x => x.classList.remove("active"));
+    renderEdu();
+  });
+  el("e-tangent").addEventListener("click", () => {
+    // ugięcie dające wejście styczne do ziemi (γ = α): R = c/(2 sin α), h = R(1 − cos α)
+    const c = +el("e-len").value;
+    const Hl = Math.min(+el("e-hlip").value, 0.9 * c);
+    const a = Math.asin(Hl / c);
+    const hT = (c / (2 * Math.sin(a))) * (1 - Math.cos(a)) * 100;
+    el("e-sag").value = Math.max(0, Math.min(60, Math.round(hT)));
     renderEdu();
   });
   for (const id of ["e-speed", "e-len", "e-hlip", "e-sag"]) el(id).addEventListener("input", renderEdu);
