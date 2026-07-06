@@ -59,9 +59,9 @@
     margin-bottom: 14px;
   }
 
-  /* --- Rysunek --- */
-  #stage { width: 100%; }
-  #stage svg { display: block; width: 100%; height: auto; }
+  /* --- Rysunki --- */
+  #stage-tech, #stage-sim { width: 100%; }
+  #stage-tech svg, #stage-sim svg { display: block; width: 100%; height: auto; }
   .stage-footer {
     display: flex;
     justify-content: space-between;
@@ -214,14 +214,24 @@
 </header>
 
 <main>
-  <section class="card" id="stage-card">
-    <h2>Profil stolika i trajektorie lotu</h2>
-    <div id="stage"></div>
-    <div class="stage-footer">
-      <span>siatka: 1 m · trajektorie: 65 / 80 / 90 / 100 % prędkości projektowej</span>
-      <span id="scale-note"></span>
-    </div>
-  </section>
+  <div style="display:flex; flex-direction:column; gap:20px; min-width:0;">
+    <section class="card">
+      <h2>Rysunek techniczny stolika</h2>
+      <div id="stage-tech"></div>
+      <div class="stage-footer">
+        <span>siatka: 1 m · sam stolik, bez dojazdu i wybiegu</span>
+        <span id="tech-note"></span>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Widok poglądowy — symulacja lotu</h2>
+      <div id="stage-sim"></div>
+      <div class="stage-footer">
+        <span>trajektorie: 65 / 80 / 90 / 100 % prędkości projektowej</span>
+        <span id="scale-note"></span>
+      </div>
+    </section>
+  </div>
 
   <div>
     <section class="card no-print">
@@ -483,14 +493,14 @@
     const hOverDeck = (v0 * Math.sin(th)) ** 2 / (2 * G);
     const impactEfh = efhAt(th, main.imp.x, main.imp.y, main.imp.thL);
 
-    // samotest: EFH wzdłuż sekcji constant-EFH powinno być = zadane (odchyłka < 2 cm)
+    // samotest: EFH wzdłuż sekcji constant-EFH powinno być = zadane
     let maxDev = 0;
     for (let i = 20; i < land.pts.length - 2; i += 40) {
       const [sx, sy] = land.pts[i];
       if (land.impact && !land.overshoot && sx > land.impact.x - 0.1) break;
       const thL = Math.atan((land.pts[i + 1][1] - land.pts[i - 1][1]) / (land.pts[i + 1][0] - land.pts[i - 1][0]));
       const e = efhAt(th, sx, sy, thL);
-      if (e < efh - 1e-3) continue; // strefa klamry (za mała energia, EFH < zadane = bezpieczniej)
+      if (e < efh - 1e-3) continue; // strefa klamry (za mała energia — EFH mniejsze od zadanego = bezpieczniej)
       maxDev = Math.max(maxDev, Math.abs(e - efh));
     }
     console.debug("EFH self-test, max odchyłka [m]:", maxDev.toFixed(3));
@@ -575,9 +585,6 @@
 
   /* ================= RENDER ================= */
 
-  const W = 1000, HS = 520, PAD = 46;
-  const animState = { raf: null };
-
   function svgEl(name, attrs, parent) {
     const n = document.createElementNS(SVG_NS, name);
     for (const k in attrs) n.setAttribute(k, attrs[k]);
@@ -585,57 +592,118 @@
     return n;
   }
 
-  function render() {
-    const m = computeModel();
-    const world = buildWorld(m);
-    const lipX = world.lipX;
-
-    const x0 = world.startX, x1 = world.endX;
-    const yTop = Math.max(m.hMax + 0.8, m.H + 1.2, 2);
-    const scale = Math.min((W - 2 * PAD) / (x1 - x0), (HS - 2 * PAD) / (yTop + 0.6));
+  // rusztowanie sceny: niebo, siatka metrowa, bryła stolika w zakresie [x0, x1];
+  // wysokość SVG dobierana do proporcji terenu (bez pustego nieba)
+  function makeScene(containerId, worldPts, x0, x1, yTopWorld, padB) {
+    const W = 1000, PAD = 46, PADT = 28, PADB = padB || 70;
+    let scale = (W - 2 * PAD) / (x1 - x0);
+    let HS = Math.round(scale * (yTopWorld + 0.3) + PADT + PADB);
+    if (HS > 560) { scale *= (560 - PADT - PADB) / (HS - PADT - PADB); HS = 560; }
+    if (HS < 240) HS = 240;
     const X = x => PAD + (x - x0) * scale;
-    const Y = y => HS - PAD - y * scale;
-
-    const stage = el("stage");
+    const Y = y => HS - PADB - y * scale;
+    const stage = el(containerId);
     stage.innerHTML = "";
     const svg = svgEl("svg", { viewBox: `0 0 ${W} ${HS}` }, stage);
-
     const defs = svgEl("defs", {}, svg);
-    const grad = svgEl("linearGradient", { id: "dirt", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    const gid = containerId;
+    const grad = svgEl("linearGradient", { id: "dirt-" + gid, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
     svgEl("stop", { offset: "0%", "stop-color": "#b98a55" }, grad);
     svgEl("stop", { offset: "100%", "stop-color": "#8a5f33" }, grad);
-    const sky = svgEl("linearGradient", { id: "sky", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    const sky = svgEl("linearGradient", { id: "sky-" + gid, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
     svgEl("stop", { offset: "0%", "stop-color": "#eaf4fb" }, sky);
     svgEl("stop", { offset: "100%", "stop-color": "#fdfcf8" }, sky);
-    const mk = svgEl("marker", { id: "arr", markerWidth: 8, markerHeight: 8, refX: 4, refY: 4, orient: "auto-start-reverse" }, defs);
+    const mk = svgEl("marker", { id: "arr-" + gid, markerWidth: 8, markerHeight: 8, refX: 4, refY: 4, orient: "auto-start-reverse" }, defs);
     svgEl("path", { d: "M0,1 L7,4 L0,7", fill: "none", stroke: "#8a867a", "stroke-width": 1.2 }, mk);
 
-    svgEl("rect", { x: 0, y: 0, width: W, height: HS, fill: "url(#sky)", rx: 10 }, svg);
+    svgEl("rect", { x: 0, y: 0, width: W, height: HS, fill: `url(#sky-${gid})`, rx: 10 }, svg);
 
-    // siatka metrowa
     const grid = svgEl("g", { stroke: "#d8d2c2", "stroke-width": 1, opacity: 0.6 }, svg);
     for (let gx = Math.ceil(x0); gx <= x1; gx++)
-      svgEl("line", { x1: X(gx), y1: Y(0), x2: X(gx), y2: Y(yTop) }, grid);
-    for (let gy = 0; gy <= yTop; gy++) {
+      svgEl("line", { x1: X(gx), y1: Y(0), x2: X(gx), y2: Y(yTopWorld) }, grid);
+    for (let gy = 0; gy <= yTopWorld; gy++) {
       svgEl("line", { x1: X(x0), y1: Y(gy), x2: X(x1), y2: Y(gy) }, grid);
-      if (gy > 0) svgEl("text", { x: X(x0) + 4, y: Y(gy) - 3, "font-size": 10, fill: "#a49f90", stroke: "none" }, grid)
-        .textContent = gy + " m";
+      if (gy > 0)
+        svgEl("text", { x: X(x0) + 4, y: Y(gy) - 3, "font-size": 10, fill: "#a49f90", stroke: "none" }, grid).textContent = gy + " m";
     }
 
-    // bryła + powierzchnia
-    const surf = world.pts.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + " " + Y(p[1]).toFixed(1)).join(" ");
-    svgEl("path", { d: surf + ` L ${X(x1)} ${Y(-0.5)} L ${X(x0)} ${Y(-0.5)} Z`, fill: "url(#dirt)", stroke: "none" }, svg);
+    const vis = worldPts.filter(p => p[0] >= x0 - 1e-9 && p[0] <= x1 + 1e-9);
+    if (vis[0][0] > x0) vis.unshift([x0, heightAt(worldPts, x0)]);
+    if (vis[vis.length - 1][0] < x1) vis.push([x1, heightAt(worldPts, x1)]);
+    const surf = vis.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + " " + Y(p[1]).toFixed(1)).join(" ");
+    svgEl("path", { d: surf + ` L ${X(x1)} ${Y(-0.12)} L ${X(x0)} ${Y(-0.12)} Z`, fill: `url(#dirt-${gid})`, stroke: "none" }, svg);
     svgEl("path", { d: surf, fill: "none", stroke: "#5f4222", "stroke-width": 3, "stroke-linejoin": "round" }, svg);
     svgEl("line", { x1: X(x0), y1: Y(0) + 1.5, x2: X(x1), y2: Y(0) + 1.5, stroke: "#4a7d3c", "stroke-width": 3 }, svg);
+    return { svg, X, Y, scale, gid };
+  }
 
-    // wachlarz trajektorii
+  function dimTools(sc) {
+    const dim = svgEl("g", { "font-size": 13, "font-weight": 600, fill: "#55524a" }, sc.svg);
+    return function (xa, ya, xb, yb, label, dxT, dyT, anchor) {
+      svgEl("line", { x1: xa, y1: ya, x2: xb, y2: yb, stroke: "#8a867a", "stroke-width": 1.2, "marker-start": `url(#arr-${sc.gid})`, "marker-end": `url(#arr-${sc.gid})` }, dim);
+      svgEl("text", { x: (xa + xb) / 2 + (dxT || 0), y: (ya + yb) / 2 + (dyT || 0), "text-anchor": anchor || "middle" }, dim).textContent = label;
+    };
+  }
+
+  // ---------- widok techniczny: sam stolik, kąty i wymiary ----------
+  function renderTechnical(m, world) {
+    const lipX = world.lipX;
+    const x1t = lipX + m.land.endX + 0.4;
+    const yTop = Math.max(m.H * 1.3, m.H + 0.7, 1.5);
+    const sc = makeScene("stage-tech", world.pts, 0, x1t, yTop, 78);
+    const dim = dimTools(sc);
+
+    // wymiary liniowe
+    dim(sc.X(lipX) + 16, sc.Y(0), sc.X(lipX) + 16, sc.Y(m.H), `H = ${fmt(m.H)} m`, 12, 4, "start");
+    dim(sc.X(0), sc.Y(0) + 26, sc.X(lipX), sc.Y(0) + 26, `najazd ${fmt(lipX, 1)} m`, 0, 18);
+    dim(sc.X(lipX + 0.25), sc.Y(m.H) - 16, sc.X(lipX + m.xk), sc.Y(m.H) - 16, `stół ${fmt(m.xk, 1)} m`, 0, -8);
+    dim(sc.X(lipX + m.xk), sc.Y(0) + 26, sc.X(lipX + m.land.endX), sc.Y(0) + 26, `zeskok ${fmt(m.land.endX - m.xk, 1)} m`, 0, 18);
+
+    // kąt lipy: łuk między poziomem a rampą (przy lipie)
+    const cx = sc.X(lipX), cy = sc.Y(m.H), R = 46;
+    const bx = cx - R * Math.cos(m.th), by = cy + R * Math.sin(m.th);
+    svgEl("line", { x1: cx - R - 14, y1: cy, x2: cx, y2: cy, stroke: "#c94f3d", "stroke-width": 1.2, "stroke-dasharray": "4 3" }, sc.svg);
+    svgEl("path", { d: `M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${bx.toFixed(1)} ${by.toFixed(1)}`, fill: "none", stroke: "#c94f3d", "stroke-width": 1.6 }, sc.svg);
+    svgEl("text", {
+      x: cx - (R + 24) * Math.cos(m.th / 2), y: cy + (R + 24) * Math.sin(m.th / 2) + 4,
+      "text-anchor": "middle", "font-size": 14, "font-weight": 700, fill: "#c94f3d",
+    }, sc.svg).textContent = m.thetaDeg + "°";
+
+    // kąty zeskoku: przy knucklu i u podstawy
+    const lp = m.land.pts;
+    const iT = Math.min(40, lp.length - 2);
+    const aTop = -Math.atan((lp[iT][1] - lp[iT - 1][1]) / (lp[iT][0] - lp[iT - 1][0])) / RAD;
+    const n = lp.length;
+    const aBot = -Math.atan((lp[n - 1][1] - lp[n - 2][1]) / (lp[n - 1][0] - lp[n - 2][0])) / RAD;
+    const midL = lipX + m.xk + (m.land.endX - m.xk) * 0.55;
+    svgEl("text", {
+      x: sc.X(midL), y: sc.Y(heightAt(world.pts, midL)) - 12,
+      "text-anchor": "middle", "font-size": 12.5, "font-weight": 600, fill: "#8a5f33",
+    }, sc.svg).textContent = `pochylenie ${fmt(aTop, 0)}° → ${fmt(aBot, 0)}°`;
+
+    // etykieta klotoidy
+    const kx = m.takeoff.transEnd.x * 0.55;
+    svgEl("text", {
+      x: sc.X(kx), y: sc.Y(heightAt(world.pts, kx)) - 12,
+      "text-anchor": "middle", "font-size": 12.5, "font-weight": 600, fill: "#8a5f33",
+    }, sc.svg).textContent = "klotoida r=" + fmt(m.takeoff.r, 1) + " m";
+
+    el("tech-note").textContent = `konstrukcja: ${fmt(x1t - 0.4, 1)} m długości`;
+  }
+
+  // ---------- widok poglądowy: cała scena + wachlarz trajektorii ----------
+  function renderSim(m, world) {
+    const lipX = world.lipX;
+    const yTop = Math.max(m.hMax + 0.5, m.H + 0.5, 1.5);
+    const sc = makeScene("stage-sim", world.pts, world.startX, world.endX, yTop, 56);
+
     for (const tr of m.family) {
       const isMain = tr.f === 1.0;
-      const n = 60, p = [];
-      for (let i = 0; i <= n; i++) {
-        const xx = tr.imp.x * i / n;
+      const nn = 60, p = [];
+      for (let i = 0; i <= nn; i++) {
+        const xx = tr.imp.x * i / nn;
         const yy = xx * Math.tan(m.th) - G * xx * xx / (2 * tr.v * tr.v * Math.cos(m.th) ** 2);
-        p.push((i ? "L" : "M") + X(lipX + xx).toFixed(1) + " " + Y(m.H + yy).toFixed(1));
+        p.push((i ? "L" : "M") + sc.X(lipX + xx).toFixed(1) + " " + sc.Y(m.H + yy).toFixed(1));
       }
       svgEl("path", {
         d: p.join(" "), fill: "none",
@@ -643,84 +711,27 @@
         "stroke-width": isMain ? 2.5 : 1.4,
         opacity: isMain ? 1 : 0.65,
         "stroke-dasharray": "7 6", "stroke-linecap": "round",
-      }, svg);
+      }, sc.svg);
       svgEl("circle", {
-        cx: X(lipX + tr.imp.x), cy: Y(m.H + tr.imp.y), r: isMain ? 5 : 3.5,
+        cx: sc.X(lipX + tr.imp.x), cy: sc.Y(m.H + tr.imp.y), r: isMain ? 5 : 3.5,
         fill: isMain ? "#c94f3d" : "#d9a86e", stroke: "#fff", "stroke-width": isMain ? 2 : 1.2,
-      }, svg);
+      }, sc.svg);
     }
-    svgEl("circle", { cx: X(lipX), cy: Y(m.H), r: 5, fill: "#d97b29", stroke: "#fff", "stroke-width": 2 }, svg);
+    svgEl("circle", { cx: sc.X(lipX), cy: sc.Y(m.H), r: 5, fill: "#d97b29", stroke: "#fff", "stroke-width": 2 }, sc.svg);
 
-    // wymiarowanie
-    const dim = svgEl("g", { "font-size": 12.5, "font-weight": 600, fill: "#55524a" }, svg);
-    function dimLine(xa, ya, xb, yb, label, dxT, dyT, anchor) {
-      svgEl("line", { x1: xa, y1: ya, x2: xb, y2: yb, stroke: "#8a867a", "stroke-width": 1.2, "marker-start": "url(#arr)", "marker-end": "url(#arr)" }, dim);
-      svgEl("text", { x: (xa + xb) / 2 + dxT, y: (ya + yb) / 2 + dyT, "text-anchor": anchor || "middle" }, dim).textContent = label;
-    }
-    dimLine(X(lipX) + 16, Y(0), X(lipX) + 16, Y(m.H), `H = ${fmt(m.H)} m`, 10, 4, "start");
-    dimLine(X(lipX + 0.25), Y(m.H) - 14, X(lipX + m.xk), Y(m.H) - 14, `stół ${fmt(m.xk, 1)} m`, 0, -6);
-    dimLine(X(lipX), Y(0) + 26, X(lipX + m.flightDist), Y(0) + 26, `lot ${fmt(m.flightDist)} m`, 0, 18);
-
-    const partLbl = svgEl("g", { "font-size": 11.5, fill: "#8a5f33", "font-weight": 600 }, svg);
-    svgEl("text", { x: X(m.takeoff.transEnd.x * 0.5), y: Y(m.takeoff.transEnd.y * 0.3) + 24, "text-anchor": "middle" }, partLbl)
-      .textContent = "klotoida r=" + fmt(m.takeoff.r, 1) + " m";
-    svgEl("text", { x: X(lipX + m.xk + (m.land.endX - m.xk) * 0.55), y: Y(m.H * 0.45) + 24, "text-anchor": "middle" }, partLbl)
-      .textContent = "zeskok EFH " + fmt(m.efh, 1) + " m";
+    const dim = dimTools(sc);
+    dim(sc.X(lipX), sc.Y(0) + 22, sc.X(lipX + m.flightDist), sc.Y(0) + 22, `lot ${fmt(m.flightDist)} m`, 0, 16);
 
     el("scale-note").textContent = `całość: ~${fmt(world.endX - world.startX, 1)} m długości`;
-
-    startAnimation(svg, m, world, X, Y);
-    renderResults(m);
-    renderStakeout(m, world);
   }
 
-  /* ---------- animacja ---------- */
-  function startAnimation(svg, m, world, X, Y) {
-    if (animState.raf) cancelAnimationFrame(animState.raf);
-    // ścieżka z czasem: dojazd → najazd → lot → zeskok → wybieg
-    const timed = [];
-    let t = 0;
-    const push = (x, y) => timed.push({ t, x, y });
-    const speedAt = y => Math.sqrt(Math.max(m.vApr * m.vApr - 2 * G * y, 0.6));
-    push(world.startX, 0);
-    const lipIdx = world.pts.findIndex(p => p[0] >= world.lipX - 1e-6);
-    for (let i = 1; i <= lipIdx && i < world.pts.length; i++) {
-      const [xa, ya] = world.pts[i - 1], [xb, yb] = world.pts[i];
-      const ds = Math.hypot(xb - xa, yb - ya);
-      t += ds / speedAt((ya + yb) / 2);
-      push(xb, yb);
-    }
-    const nF = 40;
-    for (let i = 1; i <= nF; i++) {
-      const tf = m.tLand * i / nF;
-      t += m.tLand / nF;
-      push(world.lipX + m.v0 * Math.cos(m.th) * tf, m.H + m.v0 * Math.sin(m.th) * tf - G / 2 * tf * tf);
-    }
-    const impX = world.lipX + m.flightDist;
-    for (let i = 1; i < world.pts.length; i++) {
-      const [xa, ya] = world.pts[i - 1], [xb, yb] = world.pts[i];
-      if (xb <= impX || xa < world.lipX) continue;
-      const ds = Math.hypot(xb - xa, yb - ya);
-      t += ds / speedAt((ya + yb) / 2);
-      push(xb, yb);
-    }
-    const total = t + 0.8;
-
-    const rider = svgEl("text", { "font-size": 22, "text-anchor": "middle" }, svg);
-    rider.textContent = "🚵";
-
-    const t0 = performance.now();
-    function frame(now) {
-      const tt = ((now - t0) / 1000) % total;
-      let i = timed.findIndex(p => p.t >= tt);
-      if (i < 1) i = timed.length - 1;
-      const a = timed[i - 1], b = timed[i] || a;
-      const u = b.t === a.t ? 0 : (tt - a.t) / (b.t - a.t);
-      rider.setAttribute("x", X(a.x + (b.x - a.x) * u));
-      rider.setAttribute("y", Y(a.y + (b.y - a.y) * u) - 6);
-      animState.raf = requestAnimationFrame(frame);
-    }
-    animState.raf = requestAnimationFrame(frame);
+  function render() {
+    const m = computeModel();
+    const world = buildWorld(m);
+    renderTechnical(m, world);
+    renderSim(m, world);
+    renderResults(m);
+    renderStakeout(m, world);
   }
 
   /* ---------- wyniki ---------- */
