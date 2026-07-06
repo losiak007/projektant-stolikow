@@ -33,6 +33,15 @@ liczy pełną geometrię skoczni i parametry lotu — tak, żeby dało się świ
   0,2 m), co wydłuża lot względem rachunku "na płasko".
 - **Korekcja na rozstaw osi** (Trailism): efektywny kąt wybicia = cięciwa ostatniego rozstawu
   osi najazdu — tylne koło opuszcza lipę później; przy rampie ≥ rozstaw poprawka znika.
+  (Trailism podaje też korekcję promienia o wb·sinθ — nie stosujemy obu naraz, bo opisują
+  ten sam efekt; wybraliśmy wariant cięciwowy jako bardziej fizyczny.)
+- **Rysunek profilu** = łańcuch segmentów o ciągłych stycznych (G1), nazwy wg głównej figury
+  Trailism: Approach → Transition → Equilibration → Lip (ostra krawędź, wygładzony tylko
+  szpic kreski r=6 cm) → Deck → Knuckle (łuk styczny) → Landing (parabola lotu) → Bucket
+  (łuk < 3 g kończący się dokładnie na gruncie) → Run-out. Samotest ciągłości:
+  `window.__dbg.world.pts` w konsoli (skoki kąta < 4° przy segmentach > 4 cm).
+- Przypis Trailism o „5,7 ft przy 20 mph/20°" zakłada dojazd ze spadkiem ~10 % — narzędzie
+  zakłada płaski dojazd (stąd niższe H).
 - **Zeskok prowadzony po paraboli lotu** (Trailism: "landing mimics and follows the parabolic
   flight path"): zaczyna się kątem lipy przy knucklu, stromieje jak trajektoria, wyokrąglony
   u podstawy (~3 g). **EFH** (equivalent fall height) liczone jako kontrola bezpieczeństwa:

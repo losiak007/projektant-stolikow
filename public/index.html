@@ -443,35 +443,90 @@
     return { pts, r: rTop, rEntry, rTop, lip, H, v0, Lramp, tooSlow, transEnd };
   }
 
-  // Zeskok prowadzony po paraboli lotu (Trailism: "landing mimics and follows
-  // the parabolic flight path") — zaczyna się na poziomie blatu kątem lotu
-  // w tym miejscu, stromieje jak trajektoria i wyokrągla się łukiem u podstawy
-  // (limit ~3 g). Dzięki temu przyziemienie jest niemal styczne (EFH ≈ 0).
-  function buildLanding(vx, vy, drop, H, xk) {
-    const tanA0 = Math.sqrt(vy * vy + 2 * G * drop) / vx;   // kąt lotu na poziomie blatu
-    const kq = G / (2 * vx * vx);                           // krzywizna paraboli lotu
-    const vLand = Math.sqrt(vx * vx + vy * vy + 2 * G * H);
-    const rf = Math.min(4, Math.max(1, vLand * vLand / (3 * G))); // wyokrąglenie u podstawy
-    const pts = [[xk, -drop]];
-    const du = 0.04;
-    let u = 0, x = xk, y = -drop, a = Math.atan(tanA0), arc = false, thLBot = a;
-    for (let i = 0; i < 6000; i++) {
-      if (!arc) {
-        u += du;
-        y = -drop - tanA0 * u - kq * u * u;
-        a = Math.atan(tanA0 + 2 * kq * u);
-        x = xk + u;
-        if (y <= -H + rf * (1 - Math.cos(a))) { arc = true; thLBot = a; continue; }
-        pts.push([x, y]);
-      } else {
-        a -= du / rf;
-        if (a <= 0) break;
-        x += Math.cos(a) * du; y -= Math.sin(a) * du;
-        pts.push([x, Math.max(y, -H)]);
-      }
-      if (y <= -H) break;
+  /* ---------- helpery geometrii: łuki styczne (ciągłość G1) ---------- */
+  const GEO = { ds: 0.03, rLip: 0.06, rBack: 0.15, rPit: 0.4, capShare: 0.5 };
+
+  // łuk kołowy od kursu a1 do a2 (rad), promień r, start dokładnie w S
+  // (punkty BEZ S); znak (a2−a1): + wklęsły (dolina), − wypukły (grzbiet)
+  function arcPts(S, r, a1, a2, ds = GEO.ds) {
+    const sgn = Math.sign(a2 - a1) || 1;
+    const C = [S[0] - sgn * r * Math.sin(a1), S[1] + sgn * r * Math.cos(a1)];
+    // maks. ~3,5° na cięciwę, żeby małe łuki też były gładkie
+    const n = Math.max(2, Math.ceil(Math.abs(a2 - a1) / 0.06), Math.ceil(Math.abs(a2 - a1) * r / ds));
+    const out = [];
+    for (let i = 1; i <= n; i++) {
+      const t = a1 + (a2 - a1) * i / n;
+      out.push([C[0] + sgn * r * Math.sin(t), C[1] - sgn * r * Math.cos(t)]);
     }
-    return { pts, thLTop: Math.atan(tanA0), thLBot, endX: pts[pts.length - 1][0] };
+    return out;
+  }
+
+  // zaokrąglenie naroża Q między prostymi o kursach aIn i aOut
+  function fillet(Q, aIn, aOut, r, ds = GEO.ds) {
+    const t = r * Math.tan(Math.abs(aOut - aIn) / 2);
+    const S = [Q[0] - t * Math.cos(aIn), Q[1] - t * Math.sin(aIn)];
+    const pts = arcPts(S, r, aIn, aOut, ds);
+    return { S, E: pts[pts.length - 1], t, pts };
+  }
+
+  // zmniejsza promień naroża tak, by styczne zmieściły się w sąsiednich segmentach
+  function fitFilletR(r, aIn, aOut, maxTanIn, maxTanOut) {
+    const dA = Math.abs(aOut - aIn);
+    if (dA < 1e-6) return 0;
+    const tMax = Math.min(maxTanIn, maxTanOut);
+    const t = r * Math.tan(dA / 2);
+    return t <= tMax ? r : Math.max(0, tMax / Math.tan(dA / 2));
+  }
+
+  // Zeskok wg głównej figury Trailism: Knuckle (łuk styczny) → Landing
+  // (parabola lotu — "landing mimics and follows the parabolic flight path")
+  // → Bucket (łuk < 3 g kończący się DOKŁADNIE na gruncie kursem 0).
+  // angIn: kurs powierzchni dochodzącej do knuckla (blat: −atan(drop/xk); gap: +60°)
+  function buildLanding(vx, vy, drop, H, xk, angIn) {
+    const tanA0 = Math.sqrt(vy * vy + 2 * G * drop) / vx;   // kąt lotu na poziomie knuckla
+    const kq = G / (2 * vx * vx);                           // krzywizna paraboli lotu
+    const phiL = -Math.atan(tanA0);
+    // knuckle: łuk styczny między dojściem a początkiem paraboli zeskoku
+    const maxTanIn = angIn > 0
+      ? 0.35 * (H - drop) / Math.sin(Math.max(angIn, 0.1))  // gap: nie zjadaj ściany
+      : 0.35 * xk * Math.cos(angIn);                        // stolik: nie zjadaj blatu
+    // łuk knuckla nie może zejść poniżej ~połowy wysokości knuckle→grunt
+    const maxTanVert = 0.45 * Math.max(H - drop, 0.05) / Math.max(Math.abs(Math.sin(phiL)), 0.15);
+    const rK = Math.max(0.05, fitFilletR(
+      Math.min(1.0, Math.max(0.3, 0.15 * xk)), angIn, phiL, maxTanIn,
+      Math.min(0.35 * xk, maxTanVert)));
+    const f = fillet([xk, -drop], angIn, phiL, rK);
+    const pts = [f.S, ...f.pts];
+    // parabola lotu od końca łuku knuckla
+    const vLand2 = vx * vx + vy * vy + 2 * G * H;
+    const rf3g = vLand2 / (3 * G);                          // Trailism: lądowanie < 3 g
+    const D = f.E[1] + H;                                   // budżet opadu do gruntu
+    const du = 0.04;
+    let u = 0, x = f.E[0], y = f.E[1], a = -phiL, rFillet = null, thLBot = -phiL;
+    for (let i = 0; i < 6000; i++) {
+      // bucket: min(promień 3 g, maks. połowa opadu w łuku) — promień dopasowany
+      // dokładnie w punkcie triggera, więc łuk kończy się równo na gruncie
+      if ((y + H) <= Math.min(rf3g * (1 - Math.cos(a)), GEO.capShare * D) + 1e-9) {
+        rFillet = (y + H) / (1 - Math.cos(a));
+        thLBot = a;
+        break;
+      }
+      u += du;
+      x = f.E[0] + u;
+      y = f.E[1] - tanA0 * u - kq * u * u;
+      a = Math.atan(tanA0 + 2 * kq * u);
+      pts.push([x, y]);
+      if (y <= -H) break;                                    // bezpiecznik
+    }
+    if (rFillet == null) { rFillet = Math.max(0.01, (y + H) / (1 - Math.cos(a))); thLBot = a; }
+    const gBottom = vLand2 / (rFillet * G);
+    if (gBottom > 3.2) console.debug("bucket:", gBottom.toFixed(1), "g (r=" + rFillet.toFixed(2), "m)");
+    for (const p of arcPts([x, y], rFillet, -a, 0)) pts.push([p[0], Math.max(p[1], -H)]);
+    return {
+      pts, thLTop: Math.atan(tanA0), thLBot,
+      endX: pts[pts.length - 1][0],
+      knuckleS: f.S, rKnuckle: rK, rFillet, gBottom,
+    };
   }
 
   // przyziemienie toru (vx, vy z lipy) na powierzchni przed knucklem
@@ -547,12 +602,12 @@
     const xSweet = vx * tDeck;
     const xk = Math.max(1.2, xSweet);
 
-    const land = buildLanding(vx, vy, drop, H, xk);
-
     // gap: dno dziury = grunt (−H), przednia ściana lądowania 60° do knuckla
     const isGap = jumpType === "gap";
     const shortY = isGap ? H : drop;
     const faceStart = isGap ? xk - (H - drop) / Math.tan(60 * RAD) : null;
+
+    const land = buildLanding(vx, vy, drop, H, xk, isGap ? 60 * RAD : -Math.atan(drop / xk));
 
     // wachlarz trajektorii
     const family = [0.65, 0.8, 0.9, 1.0].map(f => {
@@ -586,52 +641,76 @@
 
   /* ================= GEOMETRIA ŚWIATA (grunt y=0) ================= */
 
+  // Profil świata jako łańcuch segmentów o ciągłych stycznych (G1) — nazwy
+  // wg głównej figury Trailism: Approach → Transition → Equilibration (rampa)
+  // → Lip → Deck → Knuckle → Landing → Bucket → Run-out
   function buildWorld(m) {
     const lipX = m.takeoff.lip.x;
     const pts = [];
     const startX = -Math.max(3, m.vApr * 0.6);
     pts.push([startX, 0]);
-    for (const [x, y] of m.takeoff.pts) pts.push([x, y]);
-    const deckY = m.H - m.drop;
-    let landMinX;
+
+    // Approach + Transition + Equilibration (fizyka bez zmian);
+    // rampa skrócona o styczną crestu lipy
+    const tp = m.takeoff.pts;                       // ostatni punkt = lipa
+    const phiD = m.type === "gap" ? 0 : -Math.atan(m.drop / m.xk);
+    const rLip = fitFilletR(GEO.rLip, m.th, phiD, 0.3 * Math.max(m.takeoff.Lramp, 0.05), 0.2 * m.xk);
+    const crest = rLip > 0.005 ? fillet([lipX, m.H], m.th, phiD, rLip) : null;
+    for (let i = 1; i < tp.length - 1; i++) pts.push([tp[i][0], tp[i][1]]);
+    if (crest) { pts.push(crest.S); for (const p of crest.pts) pts.push(p); }
+    else pts.push([lipX, m.H]);
+    const crestE = crest ? crest.E : [lipX, m.H];
+
     if (m.type === "gap") {
-      // gap: tylna ściana najazdu w dół, dno dziury na gruncie, ściana lądowania 60°
-      const backBase = lipX + 0.15 + m.H / Math.tan(55 * RAD);
-      pts.push([lipX + 0.15, m.H]);
-      pts.push([backBase, 0]);
-      const faceStartW = Math.max(backBase + 0.4, lipX + m.faceStart);
-      pts.push([faceStartW, 0]);
-      pts.push([lipX + m.xk, deckY]);
-      landMinX = lipX + m.xk;
-    } else {
-      // blat opada łagodnie od lipy (H) do knuckla (H − drop) — bez uskoku za lipą
-      const kRound = Math.min(0.5, m.xk * 0.25);
-      pts.push([lipX + m.xk - kRound, m.H - m.drop * (m.xk - kRound) / m.xk]);
-      // knuckle: mały bezier styczny do blatu i początku zeskoku
-      const i0 = Math.min(25, m.land.pts.length - 1);
-      const s0 = m.land.pts[i0];
-      const slope0 = Math.atan((s0[1] + m.drop) / (s0[0] - m.xk));
-      const u0 = kRound * Math.cos(slope0);
-      const bEnd = [lipX + m.xk + u0, deckY + Math.tan(slope0) * u0];
-      const bStartY = m.H - m.drop * (m.xk - kRound) / m.xk;
-      for (let i = 1; i <= 8; i++) {
-        const u = i / 8, w = 1 - u;
-        pts.push([
-          w * w * (lipX + m.xk - kRound) + 2 * w * u * (lipX + m.xk) + u * u * bEnd[0],
-          w * w * bStartY + 2 * w * u * deckY + u * u * bEnd[1],
-        ]);
+      // półka za lipą → wypukły fillet → ściana tylna → dno → wklęsły fillet
+      // → ściana przednia (dokładnie linia 60° z fizyki) → knuckle (w land.pts)
+      const faceA = 60 * RAD;
+      const kS = [lipX + m.land.knuckleS[0], m.H + m.land.knuckleS[1]];
+      const kSy = Math.max(kS[1], 0.05);
+      const faceBaseX = kS[0] - kSy / Math.tan(faceA);      // przecięcie ściany z gruntem
+      const sc = Math.min(1, m.H / 0.8);                    // małe skoki → mniejsza dziura
+      const shelf = 0.15 * sc;
+      const rBack = Math.max(0.03, GEO.rBack * sc);
+      let backA = 55 * RAD, rPit = GEO.rPit * sc, ok = false, fB, fG, fF;
+      for (let attempt = 0; attempt < 3 && !ok; attempt++) {
+        const tB = rBack * Math.tan(backA / 2);
+        fB = fillet([crestE[0] + shelf + tB, m.H], 0, -backA, rBack);
+        const backLen = Math.max(fB.E[1], 0) / Math.sin(backA);
+        const rG = Math.max(0.03, fitFilletR(rPit, -backA, 0, 0.9 * backLen, 1e9));
+        const groundX = fB.E[0] + fB.E[1] / Math.tan(backA); // ściana tylna do y=0
+        fG = fillet([groundX, 0], -backA, 0, rG);
+        const faceLen = kSy / Math.sin(faceA);
+        const rF = Math.max(0.03, fitFilletR(rPit, 0, faceA, 1e9, 0.5 * faceLen));
+        fF = fillet([faceBaseX, 0], 0, faceA, rF);
+        if (fF.S[0] >= fG.E[0] + 0.05) ok = true;
+        else if (attempt === 0) rPit = Math.max(0.05, rPit * 0.4);
+        else backA = 65 * RAD;
       }
-      landMinX = bEnd[0];
+      if (ok) {
+        pts.push(fB.S); for (const p of fB.pts) pts.push(p);
+        pts.push(fG.S); for (const p of fG.pts) pts.push(p);
+        pts.push(fF.S); for (const p of fF.pts) pts.push(p);
+      } else {
+        // dno niemożliwe (pokrywa się z tooSlow): jeden wklęsły łuk tylna→przednia
+        console.warn("gap: dno za krótkie — łączę ściany jednym łukiem");
+        const tB = GEO.rBack * Math.tan(backA / 2);
+        fB = fillet([crestE[0] + 0.15 + tB, m.H], 0, -backA, GEO.rBack);
+        pts.push(fB.S); for (const p of fB.pts) pts.push(p);
+        // przecięcie linii tylnej (kurs −backA z fB.E) z linią przedniej ściany
+        const t1 = Math.tan(-backA), t2 = Math.tan(faceA);
+        const ix = (kS[1] - fB.E[1] + t1 * fB.E[0] - t2 * kS[0]) / (t1 - t2);
+        const iy = fB.E[1] + t1 * (ix - fB.E[0]);
+        const fJ = fillet([ix, Math.max(iy, -0.01)], -backA, faceA, 0.3);
+        pts.push(fJ.S); for (const p of fJ.pts) pts.push(p);
+      }
     }
-    // zeskok → świat
-    for (const [x, y] of m.land.pts) {
-      const wx = lipX + x, wy = m.H + y;
-      if (wx > landMinX) pts.push([wx, Math.max(wy, 0)]);
-    }
-    // wybieg
+    // Deck (stolik): prosta od crestu do początku łuku knuckla — łuk, Landing
+    // i Bucket są już w land.pts (verbatim, bez filtrów)
+    for (const [x, y] of m.land.pts) pts.push([lipX + x, Math.max(m.H + y, 0)]);
+
+    // Run-out: bucket kończy się dokładnie na gruncie kursem 0
     const endX = lipX + m.land.endX;
     const runout = Math.max(2.5, m.v0 * 0.6);
-    pts.push([endX + 0.8, 0]);
     pts.push([endX + runout, 0]);
     return { pts, startX, endX: endX + runout, lipX };
   }
@@ -806,6 +885,7 @@
   function render() {
     const m = computeModel();
     const world = buildWorld(m);
+    window.__dbg = { m, world };   // do samotestów ciągłości profilu
     renderTechnical(m, world);
     renderSim(m, world);
     renderResults(m);

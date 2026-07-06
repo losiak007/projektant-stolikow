@@ -77,3 +77,22 @@ for (const deg of [25, 35, 45, 55, 60]) {
   const sweet = n.v0 * n.v0 * Math.sin(2 * deg * RAD) / G;
   console.log(` ${deg}°: H=${f(n.H)} m, v_lipa=${f(n.v0 * 3.6, 1)} km/h, lot(sweet)≈${f(sweet, 1)} m, r ${f(n.rEntry, 1)}→${f(n.rTop, 1)} m${n.tooSlow ? "  ⛔" : ""}`);
 }
+
+console.log("\n=== KOTWICA 5: Cutlaps — wysokość SAMEGO przejścia vs gotowe kickery ===");
+console.log(" (kicker = łuk bez rampy; nasza wysokość przejścia powinna być w okolicy)");
+console.log(" Cutlaps: Mini 0,54 m/28° · Medium 0,70 m/30° · Big 1,20 m/45°");
+for (const [vK, deg, cutH] of [[22, 28, 0.54], [24, 30, 0.70], [30, 45, 1.20]]) {
+  // wysokość przejścia = H minus wkład rampy
+  const n = takeoffNew(kmh(vK), deg * RAD, 1.3, 0.25);
+  const rampH = 0.25 * n.v0 * Math.sin(deg * RAD);
+  console.log(` ${vK} km/h/${deg}°: przejście ≈ ${f(n.H - rampH)} m (Cutlaps: ${f(cutH)} m), pełne H=${f(n.H)} m`);
+}
+console.log("\n=== KOTWICA 6: Cutlaps — promienie wjazdowe wg typu roweru ===");
+console.log(" BMX 2,4–3,0 · dirt 3,0–4,0 · full-sus 4,0–6,1 m");
+for (const vK of [20, 27, 33]) {
+  const r = kmh(vK) ** 2 / (1.5 * G);
+  console.log(` ${vK} km/h przy 1,5 g: r wjazdowe = ${f(r, 1)} m`);
+}
+console.log("\n[TEST CIĄGŁOŚCI PROFILU] rysunek: w przeglądarce, konsola:");
+console.log("  window.__dbg.world.pts — max skok kąta między segmentami >4 cm ma być < 4°");
+console.log("  (sprawdzone 2026-07: presety 0,4–1,5°, degeneraty ≤ 4,7°, x monotoniczne)");
