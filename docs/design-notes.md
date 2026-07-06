@@ -1,0 +1,41 @@
+---
+name: lesne-sciezki-stoliki
+description: "Kontekst projektu - stowarzyszenie Leśne Ścieżki buduje stoliki MTB, narzędzie index.html do ich projektowania"
+metadata: 
+  node_type: memory
+  type: project
+  originSessionId: 2ccfdad3-adad-4e54-8694-cb2f0c1d52aa
+---
+
+Tomek działa w stowarzyszeniu (Leśne Ścieżki), które buduje stoliki (tabletopy) i trasy rowerowe. Cel: projektować łagodne, "family friendly" skocznie. Rozmawia po polsku, luźnym tonem.
+
+`index.html` w tym katalogu to interaktywny projektant stolików (suwaki: prędkość + kąt wybicia). Model fizyczny oparty o konkretne źródła, których należy się trzymać przy zmianach:
+- Trailism (trailism.com/jump-design): promień najazdu r = v²/(limit·g), tj. v²/14,7 przy 1,5 g; segment "equilibrium" 0,25–0,3 s przed lipą; zeskok prowadzony po paraboli lotu.
+- mtbtrailbuilding.com/calculators/jump-design: parametry lotu liczone do powrotu na wysokość blatu (kąt lądowania = kąt wybicia).
+- IMBA Canada: początkujący 60–90 cm wybicia, lipa→lądowanie 1,2–2,1 m.
+- Lee Likes Bikes: ≤30° łagodne, 45° maks. dystans, 60°+ wysokość.
+
+Ważne (uwaga z 2026-07-06): prosty skośny zeskok NIE działa w modelu — parabola zawsze go przestrzeliwuje; zeskok musi być krzywą podążającą za parabolą lotu. Tomek skrytykował wcześniejszy rysunek stolika z "dziwnym załamaniem" — geometria ma być licząca się z fizyki, bez ręcznych kształtów.
+
+v7 (2026-07-06, plan zatwierdzony): 4 zakładki narzędzi (.tools-nav, sekcje .tool-pane tp-*; UWAGA: hidden przegrywa z inline display — jest reguła .tool-pane[hidden]{display:none!important}): Projekt skoczni / Wybicie (kicker, tryb prędkość najazdu LUB na lipie — Trailism wymiaruje na lipie, my najazdu) / Symulator lotu (prędkość na lipie+kąt+wysokość lipy; opór wg modelu Desmos Trailism m=91,2, kv=0,2205, kh=0,3216, całkowanie per-osiowe) / Pomiar szablonem (R=h/2+c²/8h, łata 50″; klasyfikacja Cutlaps). Boost/squash = ±prędkość na lipie (+3 mph/−5 mph, Trailism rys. "Ramps on 10% slope") — w głównym widoku i symulatorze. Kotwice selfeval 7–9: tabela Trailism zgodna do 0,01 ft (lot/boost/squash/r_min), opór −1,8% @40 km/h. Tabela "Ramp heights" z rysunku Trailism to liniowa reguła h=R·θ/90 — pominięta świadomie.
+
+v6.1 (2026-07-06): spadek blatu NIE może być sztywną wartością w metrach — przy krótkim stole 0,2 m dawało 9,5° zjazdu ("stolik płaski"→zjazd, Tomek słusznie się czepił). Teraz drop efektywny = min(suwak, długość_stołu·tan 4°) — pochylenie blatu zawsze ≤ ~4°.
+
+v6 (2026-07-06, plan + agent-naukowiec, zatwierdzone): przebudowa GEOMETRII RYSUNKU (fizyka nietknięta). Trailism = spec główny (decyzja Tomka; agent przeanalizował też obrazki z artykułu — kanoniczny łańcuch: Approach→Transition→Equilibration→Lip→Deck→Knuckle→Landing→Bucket→Run-out). Profil = łańcuch segmentów G1: helpery arcPts/fillet/fitFilletR (GEO consts), knuckle = łuk styczny, parabola zeskoku startuje z końca łuku, bucket = min(r 3g, ≤50% opadu) z promieniem DOPASOWANYM w triggerze (kończy się równo na gruncie), crest lipy r=6cm (lipa ma być ostra — tak rysuje Trailism), gap w pełni filletowany + ściana 60° zgodna z fizyką + skalowanie dziury dla małych H. Ważne guardy: min 6 cięciw/3,5° na łuk (artefakty próbkowania!), pionowy budżet łuku knuckla (bez schodzenia pod grunt), fitFilletR na długości ścian. Samotest ciągłości: window.__dbg.world.pts, skoki kąta <4° (presety 0,4–1,5°). Stary bezier na knucklu dawał schodki ±3–13 cm — NIE wracać do ręcznego sklejania segmentów. Backlog zaawansowany (za zgodą Tomka): constant-EFH landing (BASE-Bf), boost/squash ±15%, opór jako nakładka, hint pomiaru prędkości, prędkość między hopkami w linii.
+
+v5 (2026-07-06): przełącznik Stolik/Gap + presety poziomów (Początkujący 16km/h/20°/1,0g · Średni 24/30/1,3 · Zaawansowany 33/38/1,8 — wprost z mtbtrailbuilding.com/tutorials/tabletop-jump; gapy wg gap-jump-construction: beginner 1–2 m, inter 2–3,7, adv 3,7–6+). Gap = ta sama fizyka, geometria: tylna ściana najazdu 55°, dno na gruncie, ściana lądowania 60°; caseEfh = wpadnięcie w dziurę (vy²/2g+H); dodatkowe ostrzeżenia (dziura/ściana). Wynik "następna lipa w linii" = 2×gap od knuckla (mtbr). Suwak g-limit od 0,8 (tutorial: beginner r 2,4–3,7 m ≈ 1,0 g). Tomek: iteracje męczą, ale trzeba; design wizualny wciąż do zrobienia PÓŹNIEJ.
+
+v4 (2026-07-06, po analizie Tomka z innego czatu): potwierdzone, że opór powietrza pomijalny (<2% dla MTB do 40 km/h) i że strata prędkości na rampie już była OK. Dodane: (1) "lipa ponad blatem" (suwak zaawansowany, domyślnie 0,2 m) — lot liczony z wysokości lipy do poziomu blatu, wydłuża lot; (2) korekcja na rozstaw osi (suwak, domyślnie 1,2 m): efektywny kąt wybicia = cięciwa ostatniego rozstawu osi najazdu; przy rampie ≥ rozstaw poprawka = 0 (kicks in tylko przy wolnych/krótkich rampach). Cutlaps dodany do źródeł (promienie: BMX 2,4–3, dirt 3–4, full-sus 4–6,1 m). Lee = najlepsza kotwica empiryczna (15 mph/45° = 15 ft, zgadza się z parabolą co do cm).
+
+DECYZJA TOMKA (2026-07-06, po drugiej wpadce — stół 1 m przy 30 km/h/40°): NIE używać narciarskich źródeł (Levy/Hubbard/McNeil PDF-y) do geometrii — tylko rowerowe (Trailism, Lee, IMBA, mtbr). Suwak EFH usunięty (narciarski koncept); EFH zostało tylko jako kontrolka bezpieczeństwa (limit 1,5 m za Trailism): na zeskoku ≈0 (styczny), plus "case na blat" = (v₀sinθ)²/2g. Finalna geometria v3: blat = dystans lotu xSweet (gap≈lot, IMBA/mtbr), knuckle dokładnie na sweet spocie (touchdown styczny w knucklu), zeskok po paraboli lotu z wyokrągleniem u podstawy (~3g). Wolniejsi lądują na blacie (to jest cała idea stolika). Wcześniejszy błąd: knuckle na sweet 65% prędkości → stół 1 m, absurd.
+
+KLUCZOWA LEKCJA (2026-07-06, Tomek wychwycił błąd): wzory narciarskie (Levy/Trailism r=v²/14,7, klotoida wymiarowana prędkością wjazdową) zakładają STAŁĄ prędkość na przejściu — dla roweru wjeżdżającego z płaskiego pod górę to zawyżało najazd ~2× (przy 40 km/h/55° dawało H=7-8 m i "nie wjedziesz", absurd). Poprawka: przejście o stałym przeciążeniu normalnym κ=a·g/v², v²=v_apr²−2gy — promień maleje z prędkością (progresywna lipa, kształt klotoidalny). Walidacja: tools/selfeval.js w repo — kotwice: Lee Likes Bikes (lot przy 15mph: 14/15/14 ft, 2.5/3.8/5 ft — co do 0,1 ft), mtbr (25km/h/30°→H≈1,0 m ✓; 28/60°→2,3 m ✓), 40/55° działa (v_lipa 23,7, lot ~5 m). Fizyka lotu (rzut ukośny) była od początku dobra. Kotwica Trailism "5,7 ft przy 20mph/20°" — nieodtwarzalna, ignorujemy (model daje 3,2 ft, mtbr się zgadza).
+
+v2 (2026-07-06, plan zatwierdzony przez Tomka): Trailism = wzorzec; podbudowa = 4 PDF-y (Levy/Hubbard/McNeil/Swedberg 2015 Sports Eng — constant-EFH ODE Eq. 11; Hubbard 2009; Swedberg 2010 thesis; Petrone 2017 — zbudowany skok EFH 0,5 m). Zaimplementowane: najazd = para klotoid (r=v²/14,7 przy 1,5 g) + prosta rampa 0,25 s × v_lipy (iteracyjnie, bo v₀=√(v²−2gH) — strata na podjeździe); zeskok = powierzchnia constant-EFH całkowana z Eq. 11 (z klamrą: gdy v_J²/2g < EFH, przyjmujemy min. spadek 2°); wachlarz trajektorii 65–100%; suwak EFH 0,3–1,5 m (domyślnie 0,6); tabela tyczenia "dla koparki" co 0,5 m + kubatura + druk. Przykład kontrolny Trailism (32 km/h/20°): nasz H=1,27 m vs artykułowe 5,7 ft=1,74 m (łuk dawał 3,6 ft=1,09) — nie do odtworzenia w pełni, udokumentowane. Lot rośnie z prędkością (0,6→6,2 m przy 15→40 km/h). PDF-y w ~/Downloads. Design wizualny ma zostać jak jest (decyzja Tomka).
+
+Podgląd: `.claude/launch.json` serwuje `public/` przez `npx http-server` na porcie 8642 (python3 http.server jest zablokowany w sandboxie).
+
+Hosting/deploy (stan z 2026-07-06):
+- Plik strony przeniesiony do `public/index.html`; repo: https://github.com/losiak007/projektant-stolikow (gh CLI zalogowany jako losiak007).
+- Cloudflare Pages, projekt `stoliki`, konto tomek@byss.pl (ID 9045a9a8528a65cfe254ed188a07dba8); deploy: `npx wrangler deploy`... NIE — `npx wrangler pages deploy` (config `wrangler.jsonc` z `pages_build_output_dir`). Live: https://stoliki.pages.dev.
+- Konto Cloudflare NIE ma żadnych stref DNS; byss.pl stoi w Google Cloud DNS. DECYZJA TOMKA (2026-07-06): strona ma być TYLKO na https://stoliki.pages.dev — nie kombinować z byss.pl ani żadną custom domain (custom domain stoliki.byss.pl została usunięta z projektu Pages). Nie proponować tego ponownie.
