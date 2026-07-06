@@ -7,6 +7,14 @@ liczy pełną geometrię skoczni i parametry lotu — tak, żeby dało się świ
 
 **Live:** https://stoliki.pages.dev
 
+## Funkcje
+
+- **Typ skoczni**: stolik (tabletop) albo gap — gap = ta sama fizyka, ale otwarta dziura
+  między lipą a lądowaniem (ostrzeżenia o skróceniu liczone do dna dziury / ściany lądowania).
+- **Presety poziomów** (wg mtbtrailbuilding.com/tutorials/tabletop-jump): początkujący
+  15–25° / 13–19 km/h, średni 25–35° / 19–29 km/h, zaawansowany 30–45° / 26–40 km/h.
+- **Linia skoczni**: sugerowany odstęp do następnej lipy ≈ 2 × gap od knuckla (mtbr).
+
 ## Model fizyczny
 
 - **Najazd**: przejście o **stałym przeciążeniu normalnym** `a·g` — krzywizna `κ = a·g/v²`

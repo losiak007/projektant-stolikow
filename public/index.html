@@ -113,6 +113,17 @@
   }
   .slider-hint { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
 
+  /* --- Presety --- */
+  .presets { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .presets .grp { display: flex; gap: 4px; background: #f1ede2; border-radius: 10px; padding: 4px; }
+  .presets button {
+    border: none; background: transparent;
+    padding: 7px 12px; border-radius: 8px;
+    font-size: 12.5px; font-weight: 600; color: #55524a; cursor: pointer;
+  }
+  .presets button:hover { background: #e6e0d0; }
+  .presets button.active { background: var(--forest); color: #fff; }
+
   details.advanced { margin-top: 16px; border-top: 1px dashed #ddd8cc; padding-top: 12px; }
   details.advanced summary {
     cursor: pointer;
@@ -237,6 +248,18 @@
     <section class="card no-print">
       <h2>Parametry wejściowe</h2>
 
+      <div class="presets">
+        <div class="grp" id="type-group">
+          <button data-type="table" class="active">🟫 Stolik</button>
+          <button data-type="gap">🕳 Gap</button>
+        </div>
+        <div class="grp" id="level-group">
+          <button data-level="beginner">Początkujący</button>
+          <button data-level="inter">Średni</button>
+          <button data-level="adv">Zaawansowany</button>
+        </div>
+      </div>
+
       <div class="slider-row">
         <div class="slider-head">
           <label for="speed">Prędkość najazdu (na płaskim)</label>
@@ -262,7 +285,7 @@
             <label for="glimit">Limit przeciążenia na najeździe</label>
             <output id="glimit-out">1.5<small>g</small></output>
           </div>
-          <input type="range" id="glimit" min="1.2" max="2.5" step="0.1" value="1.5">
+          <input type="range" id="glimit" min="0.8" max="2.5" step="0.1" value="1.5">
           <div class="slider-hint">stałe przeciążenie na całym przejściu; promień maleje, gdy rower zwalnia pod górę (przy wjeździe r = v²/(limit×9,81) — Trailism: v²/14,7). Realne lipy dirt bywają ciaśniejsze (2–2,5 g)</div>
         </div>
         <div class="slider-row">
@@ -305,10 +328,11 @@
         <div class="res flight"><div class="lbl">EFH przy skróceniu na blat</div><div class="val" id="r-case"></div></div>
         <div class="res flight wide"><div class="lbl">Kąt zeskoku w miejscu lądowania</div><div class="val" id="r-langle"></div></div>
         <div class="res geo"><div class="lbl">Wysokość wybicia</div><div class="val" id="r-lip"></div></div>
-        <div class="res geo"><div class="lbl">Długość stołu (blat)</div><div class="val" id="r-table"></div></div>
+        <div class="res geo"><div class="lbl" id="lbl-table">Długość stołu (blat)</div><div class="val" id="r-table"></div></div>
         <div class="res geo"><div class="lbl">Promień przejścia (wjazd → lipa)</div><div class="val" id="r-radius"></div></div>
         <div class="res geo"><div class="lbl">Długość zeskoku (w poziomie)</div><div class="val" id="r-landlen"></div></div>
         <div class="res geo wide"><div class="lbl">Efektywny kąt wybicia (rozstaw osi)</div><div class="val" id="r-theff"></div></div>
+        <div class="res geo wide"><div class="lbl">Następna lipa w linii (mtbr: ~2 × gap od knuckla)</div><div class="val" id="r-line"></div></div>
         <div class="res geo wide"><div class="lbl">Ziemia do przerzucenia (na 1 m szerokości)</div><div class="val" id="r-vol"></div></div>
       </div>
     </section>
@@ -338,9 +362,15 @@
         Realne wymiary: beginner 3 ft / 30°, intermediate 4 ft / 45°, pro 6–7 ft / 60–70°; gap 8–12 ft;
         lądowanie szersze (i często wyższe) niż wybicie — blat ≈ dystans lotu.</li>
       <li><a href="https://mtbtrailbuilding.com/calculators/jump-design" target="_blank">MTB Trail Building — kalkulator</a> ·
-          <a href="https://www.cutlaps.com" target="_blank">Cutlaps Trajectory Calculator</a><br>
-        Rowerowe kalkulatory: czysta parabola (opór &lt; 2 % przy prędkościach MTB).
-        Cutlaps — promienie najazdu: BMX 2,4–3,0 m, dirt 3,0–4,0 m, full-sus 4,0–6,1 m.</li>
+          <a href="https://mtbtrailbuilding.com/tutorials/tabletop-jump" target="_blank">tutorial: tabletop</a> ·
+          <a href="https://mtbtrailbuilding.com/tutorials/gap-jump-construction" target="_blank">gap</a> ·
+          <a href="https://mtbtrailbuilding.com/tutorials/jump-line-design" target="_blank">jump line</a><br>
+        Presety poziomów wprost z tutorialu: beginner 15–25° / 13–19 km/h / r 2,4–3,7 m ·
+        intermediate 25–35° / 19–29 km/h · advanced 30–45° / 26–40 km/h.
+        Gapy: beginner 1–2 m, intermediate 2–3,7 m, advanced 3,7–6+ m — „tylko dla pewnie jeżdżących”.</li>
+      <li><a href="https://www.cutlaps.com" target="_blank">Cutlaps Trajectory Calculator</a><br>
+        Rowerowy kalkulator trajektorii: czysta parabola (opór &lt; 2 % przy prędkościach MTB).
+        Promienie najazdu: BMX 2,4–3,0 m, dirt 3,0–4,0 m, full-sus 4,0–6,1 m.</li>
       <li>Metryka EFH (equivalent fall height — „z jakiej wysokości spadasz”)<br>
         Używana tu tylko jako kontrola bezpieczeństwa lądowania, za Trailism (limit 1,5 m).</li>
     </ul>
@@ -363,6 +393,18 @@
   };
 
   const fmt = (x, d = 2) => x.toLocaleString("pl-PL", { minimumFractionDigits: d, maximumFractionDigits: d });
+
+  // typ skoczni: stolik (blat) albo gap (dziura między lipą a lądowaniem)
+  let jumpType = "table";
+
+  // presety poziomów wg mtbtrailbuilding.com/tutorials/tabletop-jump:
+  // beginner 15–25° / 8–12 mph / r 2,4–3,7 m (~1,0 g) · intermediate 25–35° /
+  // 12–18 mph (~1,25 g) · advanced 30–45° / 16–25 mph (~1,8 g)
+  const LEVELS = {
+    beginner: { speed: 16, angle: 20, glimit: 1.0, drop: 0.15 },
+    inter:    { speed: 24, angle: 30, glimit: 1.3, drop: 0.2 },
+    adv:      { speed: 33, angle: 38, glimit: 1.8, drop: 0.25 },
+  };
 
   /* ================= MODEL FIZYCZNY ================= */
 
@@ -432,12 +474,23 @@
     return { pts, thLTop: Math.atan(tanA0), thLBot, endX: pts[pts.length - 1][0] };
   }
 
-  // przyziemienie toru (vx, vy z lipy) na powierzchni: blat na −drop do xk,
+  // przyziemienie toru (vx, vy z lipy) na powierzchni przed knucklem
+  // (stolik: blat na −shortY; gap: dno dziury na −shortY + ściana lądowania),
   // dalej polilinia zeskoku
-  function impactOnSurface(vxi, vyi, drop, surfPts, xk) {
-    const tD = (vyi + Math.sqrt(vyi * vyi + 2 * G * drop)) / G;
+  function impactOnSurface(vxi, vyi, shortY, surfPts, xk, faceStart) {
+    const tD = (vyi + Math.sqrt(vyi * vyi + 2 * G * shortY)) / G;
     const sweet = vxi * tD;
-    if (sweet < xk - 0.02) return { x: sweet, y: -drop, onDeck: true, thL: 0 };
+    if (sweet < xk - 0.02) {
+      if (faceStart == null || sweet < faceStart - 0.02)
+        return { x: sweet, y: -shortY, onDeck: true, thL: 0 };
+      // gap: uderzenie w przednią ścianę lądowania (60°)
+      const tanF = Math.tan(60 * RAD);
+      for (let x = faceStart; x < xk; x += 0.02) {
+        const yT = x * (vyi / vxi) - G * x * x / (2 * vxi * vxi);
+        const yF = -shortY + tanF * (x - faceStart);
+        if (yT <= yF) return { x, y: yF, onDeck: false, onFace: true, thL: Math.atan(tanF) };
+      }
+    }
     for (let i = 1; i < surfPts.length; i++) {
       const [px, py] = surfPts[i];
       const yT = px * (vyi / vxi) - G * px * px / (2 * vxi * vxi);
@@ -496,24 +549,31 @@
 
     const land = buildLanding(vx, vy, drop, H, xk);
 
+    // gap: dno dziury = grunt (−H), przednia ściana lądowania 60° do knuckla
+    const isGap = jumpType === "gap";
+    const shortY = isGap ? H : drop;
+    const faceStart = isGap ? xk - (H - drop) / Math.tan(60 * RAD) : null;
+
     // wachlarz trajektorii
     const family = [0.65, 0.8, 0.9, 1.0].map(f => {
       const v = f * v0;
-      return { f, v, imp: impactOnSurface(v * Math.cos(thEff), v * Math.sin(thEff), drop, land.pts, xk) };
+      return { f, v, imp: impactOnSurface(v * Math.cos(thEff), v * Math.sin(thEff), shortY, land.pts, xk, faceStart) };
     });
     const main = family[family.length - 1];
 
     const tLand = main.imp.x / vx;
-    const hOverDeck = vy * vy / (2 * G) + drop;       // apex nad poziomem blatu
+    const hOverDeck = vy * vy / (2 * G) + drop;       // apex nad poziomem knuckla
     // EFH jako KONTROLA bezpieczeństwa (Trailism: limit ~4,9 ft / 1,5 m):
     // 1) przyziemienie projektowe na zeskoku (powinno być ~0, zeskok styczny)
     const impactEfh = Math.max(0, efhAt(thEff, main.imp.x, main.imp.y, main.imp.thL));
-    // 2) najgorszy przypadek: skrócenie i lądowanie płasko na blacie
-    const caseEfh = hOverDeck;
+    // 2) najgorszy przypadek skrócenia: stolik = płasko na blat;
+    //    gap = wpadnięcie w dziurę z pełnej wysokości lotu
+    const caseEfh = isGap ? vy * vy / (2 * G) + H : hOverDeck;
     console.debug("EFH kontrola — zeskok:", impactEfh.toFixed(2), "m · case na blat:", caseEfh.toFixed(2), "m");
 
     return {
       vKmh, vApr, v0, thetaDeg, th, thEff, drop, wb, vx, vy, aMaxG, tRamp,
+      type: jumpType, faceStart,
       takeoff: to, H, xk, land, family, main,
       tLand, hOverDeck, hMax: H + vy * vy / (2 * G),
       flightDist: main.imp.x,
@@ -532,28 +592,41 @@
     const startX = -Math.max(3, m.vApr * 0.6);
     pts.push([startX, 0]);
     for (const [x, y] of m.takeoff.pts) pts.push([x, y]);
-    // blat opada łagodnie od lipy (H) do knuckla (H − drop) — bez uskoku za lipą
     const deckY = m.H - m.drop;
-    const kRound = Math.min(0.5, m.xk * 0.25);
-    pts.push([lipX + m.xk - kRound, m.H - m.drop * (m.xk - kRound) / m.xk]);
-    // knuckle: mały bezier styczny do blatu i początku zeskoku
-    const i0 = Math.min(25, m.land.pts.length - 1);
-    const s0 = m.land.pts[i0];
-    const slope0 = Math.atan((s0[1] + m.drop) / (s0[0] - m.xk));
-    const u0 = kRound * Math.cos(slope0);
-    const bEnd = [lipX + m.xk + u0, deckY + Math.tan(slope0) * u0];
-    const bStartY = m.H - m.drop * (m.xk - kRound) / m.xk;
-    for (let i = 1; i <= 8; i++) {
-      const u = i / 8, w = 1 - u;
-      pts.push([
-        w * w * (lipX + m.xk - kRound) + 2 * w * u * (lipX + m.xk) + u * u * bEnd[0],
-        w * w * bStartY + 2 * w * u * deckY + u * u * bEnd[1],
-      ]);
+    let landMinX;
+    if (m.type === "gap") {
+      // gap: tylna ściana najazdu w dół, dno dziury na gruncie, ściana lądowania 60°
+      const backBase = lipX + 0.15 + m.H / Math.tan(55 * RAD);
+      pts.push([lipX + 0.15, m.H]);
+      pts.push([backBase, 0]);
+      const faceStartW = Math.max(backBase + 0.4, lipX + m.faceStart);
+      pts.push([faceStartW, 0]);
+      pts.push([lipX + m.xk, deckY]);
+      landMinX = lipX + m.xk;
+    } else {
+      // blat opada łagodnie od lipy (H) do knuckla (H − drop) — bez uskoku za lipą
+      const kRound = Math.min(0.5, m.xk * 0.25);
+      pts.push([lipX + m.xk - kRound, m.H - m.drop * (m.xk - kRound) / m.xk]);
+      // knuckle: mały bezier styczny do blatu i początku zeskoku
+      const i0 = Math.min(25, m.land.pts.length - 1);
+      const s0 = m.land.pts[i0];
+      const slope0 = Math.atan((s0[1] + m.drop) / (s0[0] - m.xk));
+      const u0 = kRound * Math.cos(slope0);
+      const bEnd = [lipX + m.xk + u0, deckY + Math.tan(slope0) * u0];
+      const bStartY = m.H - m.drop * (m.xk - kRound) / m.xk;
+      for (let i = 1; i <= 8; i++) {
+        const u = i / 8, w = 1 - u;
+        pts.push([
+          w * w * (lipX + m.xk - kRound) + 2 * w * u * (lipX + m.xk) + u * u * bEnd[0],
+          w * w * bStartY + 2 * w * u * deckY + u * u * bEnd[1],
+        ]);
+      }
+      landMinX = bEnd[0];
     }
-    // zeskok (constant EFH) → świat
+    // zeskok → świat
     for (const [x, y] of m.land.pts) {
       const wx = lipX + x, wy = m.H + y;
-      if (wx > bEnd[0]) pts.push([wx, Math.max(wy, 0)]);
+      if (wx > landMinX) pts.push([wx, Math.max(wy, 0)]);
     }
     // wybieg
     const endX = lipX + m.land.endX;
@@ -587,7 +660,9 @@
       return { cls: "medium", icon: "🟡", label: "Średni — intermediate",
                note: "do 45° = typowa lipa intermediate (mtbr); 45° daje maks. zasięg (Lee)" };
     return { cls: "booter", icon: "🔴", label: "Booter — dla zaawansowanych",
-             note: "strome wybicie / wysoki lot — mtbr: 55–70° to lipy pro" };
+             note: m.type === "gap"
+               ? "gap wymaga precyzji prędkości — skrócenie kończy się w dziurze (mtbtrailbuilding)"
+               : "strome wybicie / wysoki lot — mtbr: 55–70° to lipy pro" };
   }
 
   /* ================= RENDER ================= */
@@ -663,7 +738,8 @@
     // wymiary liniowe
     dim(sc.X(lipX) + 16, sc.Y(0), sc.X(lipX) + 16, sc.Y(m.H), `H = ${fmt(m.H)} m`, 12, 4, "start");
     dim(sc.X(0), sc.Y(0) + 26, sc.X(lipX), sc.Y(0) + 26, `najazd ${fmt(lipX, 1)} m`, 0, 18);
-    dim(sc.X(lipX + 0.3), sc.Y(m.H) - 16, sc.X(lipX + m.xk), sc.Y(m.H) - 16, `stół ${fmt(m.xk, 1)} m`, 0, -8);
+    dim(sc.X(lipX + 0.3), sc.Y(m.H) - 16, sc.X(lipX + m.xk), sc.Y(m.H) - 16,
+      `${m.type === "gap" ? "gap" : "stół"} ${fmt(m.xk, 1)} m`, 0, -8);
     dim(sc.X(lipX + m.xk), sc.Y(0) + 26, sc.X(lipX + m.land.endX), sc.Y(0) + 26, `zeskok ${fmt(m.land.endX - m.xk, 1)} m`, 0, 18);
 
     // kąt lipy: łuk między poziomem a rampą (przy lipie)
@@ -745,9 +821,17 @@
     if (m.tooSlow) html +=
       `<div class="badge booter"><span style="font-size:18px">⛔</span>` +
       `<span>Za wolno na taką lipę<small>przy ${m.vKmh} km/h ledwo wjedziesz na wybicie ${fmt(m.H)} m — zwiększ prędkość albo zmniejsz kąt</small></span></div>`;
-    if (m.caseOnDeck) html +=
-      `<div class="badge medium"><span style="font-size:18px">⚠️</span>` +
-      `<span>Lądowanie wypada na blacie<small>bezpieczne na stoliku, ale mało płynne — zwiększ prędkość</small></span></div>`;
+    if (m.type === "gap") html +=
+      `<div class="badge booter"><span style="font-size:18px">🕳</span>` +
+      `<span>Gap — feature zaawansowany<small>skrócenie = wpadnięcie w dziurę z EFH ${fmt(m.caseEfh)} m (mtbtrailbuilding: gapy tylko dla jeżdżących pewnie; stolik = bezpieczniejszy odpowiednik)</small></span></div>`;
+    if (m.caseOnDeck) html += m.type === "gap"
+      ? `<div class="badge booter"><span style="font-size:18px">⛔</span>` +
+        `<span>Za wolno — lądowanie w dziurze<small>tor projektowy nie dolatuje do lądowania — zwiększ prędkość albo zmniejsz gap</small></span></div>`
+      : `<div class="badge medium"><span style="font-size:18px">⚠️</span>` +
+        `<span>Lądowanie wypada na blacie<small>bezpieczne na stoliku, ale mało płynne — zwiększ prędkość</small></span></div>`;
+    if (m.main.imp.onFace) html +=
+      `<div class="badge booter"><span style="font-size:18px">⛔</span>` +
+      `<span>Uderzenie w ścianę lądowania<small>tor projektowy trafia w czoło zeskoku — zwiększ prędkość albo zmniejsz gap</small></span></div>`;
     el("badge").innerHTML = html;
 
     el("r-dist").innerHTML = fmt(m.flightDist) + " <small>m</small>";
@@ -759,7 +843,9 @@
     el("r-case").innerHTML = fmt(m.caseEfh) + " <small>m " + (m.caseEfh > 1.5 ? "⚠️ > limit 1,5" : "(limit 1,5)") + "</small>";
     el("r-langle").innerHTML = fmt(m.landAngleDeg, 0) + "<small>°</small>";
     el("r-lip").innerHTML = fmt(m.H) + " <small>m</small>";
+    el("lbl-table").textContent = m.type === "gap" ? "Szerokość gapa (lipa → knuckle)" : "Długość stołu (blat)";
     el("r-table").innerHTML = fmt(m.xk, 1) + " <small>m</small>";
+    el("r-line").innerHTML = fmt(2 * m.xk, 1) + " <small>m od knuckla</small>";
     el("r-radius").innerHTML = fmt(m.takeoff.rEntry, 1) + " → " + fmt(m.takeoff.rTop, 1) + " <small>m</small>";
     el("r-landlen").innerHTML = fmt(m.land.endX - m.xk, 1) + " <small>m</small>";
     const dTh = m.thetaDeg - m.thEff / RAD;
@@ -786,14 +872,38 @@
       const h = Math.max(heightAt(world.pts, x), 0);
       vol += (h + prevH) / 2 * step;
       prevH = h;
-      const sec = x < lipX ? "najazd" : (x <= knuckleX ? "blat" : "zeskok");
+      const sec = x < lipX ? "najazd" : (x <= knuckleX ? (m.type === "gap" ? "gap" : "blat") : "zeskok");
       rows += `<tr><td class="sec">${sec}</td><td>${fmt(x, 1)}</td><td>${fmt(h * 100, 0)}</td></tr>`;
     }
     el("stakeout").innerHTML = rows;
     el("r-vol").innerHTML = "~" + fmt(vol, 1) + " <small>m³</small>";
   }
 
-  for (const k in inputs) inputs[k].addEventListener("input", render);
+  /* ---------- presety ---------- */
+  const levelBtns = document.querySelectorAll("#level-group button");
+  document.querySelectorAll("#type-group button").forEach(b => {
+    b.addEventListener("click", () => {
+      jumpType = b.dataset.type;
+      document.querySelectorAll("#type-group button").forEach(x => x.classList.toggle("active", x === b));
+      render();
+    });
+  });
+  levelBtns.forEach(b => {
+    b.addEventListener("click", () => {
+      const p = LEVELS[b.dataset.level];
+      inputs.speed.value = p.speed;
+      inputs.angle.value = p.angle;
+      inputs.glimit.value = p.glimit;
+      inputs.drop.value = p.drop;
+      levelBtns.forEach(x => x.classList.toggle("active", x === b));
+      render();
+    });
+  });
+
+  for (const k in inputs) inputs[k].addEventListener("input", () => {
+    levelBtns.forEach(x => x.classList.remove("active")); // ręczna zmiana = koniec presetu
+    render();
+  });
   render();
 })();
 </script>
