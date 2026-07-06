@@ -533,8 +533,13 @@
           <input type="range" id="e-speed" min="10" max="40" step="1" value="25">
         </div>
         <div class="slider-row">
-          <div class="slider-head"><label for="e-sag">Strzałka ugięcia (łata 127 cm)</label><output id="e-sag-out">6.0<small>cm</small></output></div>
+          <div class="slider-head"><label for="e-sag" id="e-sag-label">Strzałka ugięcia (łata 127 cm)</label><output id="e-sag-out">6.0<small>cm</small></output></div>
           <input type="range" id="e-sag" min="1.5" max="25" step="0.5" value="6">
+          <div class="presets" style="margin:8px 0 4px"><div class="grp" id="e-lata">
+            <button data-c="100">łata 1,0 m</button>
+            <button data-c="127" class="active">1,27 m (50″ Trailism)</button>
+            <button data-c="200">2,0 m</button>
+          </div></div>
           <div class="slider-hint" id="e-sag-hint"></div>
         </div>
         <div class="slider-row">
@@ -1358,6 +1363,7 @@
   // Piaskownica edukacyjna: czysty łuk kołowy z szablonu (R = h/2 + c²/8h),
   // rower na łuku, werdykty po ludzku. Model celowo prostszy niż projektowy.
   let eduRW = 0.35;      // promień koła rysowanego roweru (kosmetyka, presety)
+  let eduLata = 1.27;    // długość łaty do strzałki ugięcia (50″ = szablon Trailism)
   let eduPrev = null;
 
   function eduModel() {
@@ -1367,7 +1373,7 @@
     const th = thDeg * RAD;
     const wb = +el("e-wb").value;
     const ramp = document.querySelector("#e-ramp button.active").dataset.r === "on";
-    const c = 1.27;
+    const c = eduLata;
     const R = hs / 2 + c * c / (8 * hs);
     // powierzchnia: płaski dojazd → łuk 0→θ → (opcjonalnie) prosta rampa = 1 rozstaw osi
     const pts = [[-(wb + 1.5), 0], [0, 0]];
@@ -1622,6 +1628,7 @@
     el("r-e-h").innerHTML = fmt(m.H, 1) + " <small>m</small>";
 
     el("e-sag-hint").textContent = `→ R = ${fmt(m.R, 1)} m · ${cutlapsClass(m.R)}`;
+    el("e-sag-label").textContent = `Strzałka ugięcia (łata ${fmt(eduLata * 100, 0)} cm)`;
     el("e-speed-out").innerHTML = el("e-speed").value + "<small>km/h</small>";
     el("e-sag-out").innerHTML = fmt(+el("e-sag").value, 1) + "<small>cm</small>";
     el("e-angle-out").innerHTML = el("e-angle").value + "<small>°</small>";
@@ -1648,6 +1655,11 @@
   }));
   document.querySelectorAll("#e-ramp button").forEach(b => b.addEventListener("click", () => {
     document.querySelectorAll("#e-ramp button").forEach(x => x.classList.toggle("active", x === b));
+    renderEdu();
+  }));
+  document.querySelectorAll("#e-lata button").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll("#e-lata button").forEach(x => x.classList.toggle("active", x === b));
+    eduLata = +b.dataset.c / 100;
     renderEdu();
   }));
   el("e-wb").addEventListener("input", () => {
