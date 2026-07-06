@@ -208,9 +208,9 @@
 
 <header>
   <h1><span class="logo">🌲🚵</span>Leśne Ścieżki — projektant stolików</h1>
-  <p>Ustaw prędkość najazdu, kąt wybicia i miękkość lądowania (EFH) — narzędzie policzy pełną geometrię stolika:
-     klotoidalny najazd (limit przeciążeń i szarpnięcia), prostą rampę stabilizacji przed lipą oraz zeskok o stałym EFH,
-     bezpieczny dla każdej prędkości do projektowej. Fizyka wg Trailism i literatury naukowej (Hubbard, Levy, McNeil, Petrone).</p>
+  <p>Ustaw prędkość najazdu i kąt wybicia — narzędzie policzy pełną geometrię stolika: progresywny najazd
+     o stałym przeciążeniu, prostą rampę stabilizacji przed lipą, blat równy dystansowi lotu (wolniejsi lądują
+     bezpiecznie na stole) i zeskok odrobinę stromszy niż lipa. Fizyka rowerowa wg Trailism, Lee Likes Bikes, IMBA i mtbr.</p>
 </header>
 
 <main>
@@ -255,15 +255,6 @@
         <div class="slider-hint">realne lipy (mtbr): ~30° beginner · 45° intermediate · 55–70° pro dirt</div>
       </div>
 
-      <div class="slider-row">
-        <div class="slider-head">
-          <label for="efh">Miękkość lądowania (EFH)</label>
-          <output id="efh-out">0.60<small>m</small></output>
-        </div>
-        <input type="range" id="efh" min="0.3" max="1.5" step="0.05" value="0.6">
-        <div class="slider-hint">EFH = z jakiej wysokości „spadasz” przy lądowaniu; 0,5 m zbudowano i zmierzono (Petrone 2017), 1,5 m = absolutny limit (USTPC/Minetti)</div>
-      </div>
-
       <details class="advanced">
         <summary>Ustawienia zaawansowane</summary>
         <div class="slider-row">
@@ -294,8 +285,9 @@
         <div class="res flight"><div class="lbl">Maks. wysokość nad gruntem</div><div class="val" id="r-hmax"></div></div>
         <div class="res flight"><div class="lbl">Czas lotu</div><div class="val" id="r-time"></div></div>
         <div class="res flight"><div class="lbl">Prędkość na lipie</div><div class="val" id="r-vlip"></div></div>
-        <div class="res flight"><div class="lbl">EFH przy przyziemieniu</div><div class="val" id="r-efh"></div></div>
-        <div class="res flight"><div class="lbl">Kąt zeskoku w miejscu lądowania</div><div class="val" id="r-langle"></div></div>
+        <div class="res flight"><div class="lbl">EFH na zeskoku (miękkość)</div><div class="val" id="r-efh"></div></div>
+        <div class="res flight"><div class="lbl">EFH przy skróceniu na blat</div><div class="val" id="r-case"></div></div>
+        <div class="res flight wide"><div class="lbl">Kąt zeskoku w miejscu lądowania</div><div class="val" id="r-langle"></div></div>
         <div class="res geo"><div class="lbl">Wysokość wybicia</div><div class="val" id="r-lip"></div></div>
         <div class="res geo"><div class="lbl">Długość stołu (blat)</div><div class="val" id="r-table"></div></div>
         <div class="res geo"><div class="lbl">Promień przejścia (wjazd → lipa)</div><div class="val" id="r-radius"></div></div>
@@ -319,26 +311,24 @@
     <h2>Na czym to policzone — źródła</h2>
     <ul>
       <li><a href="https://trailism.com/jump-design/" target="_blank">Trailism — Jump Design</a> (wzorzec)<br>
-        Klotoida zamiast łuku („minimizes jerk or buck stress”), r = v²/14,7 m/s² przy 1,5 g, prosta rampa 0,25 s × prędkość,
-        strata prędkości na podjeździe, zeskok podążający za parabolą lotu, EFH maks. ~4,9 ft.</li>
-      <li><a href="https://doi.org/10.1007/s12283-015-0182-6" target="_blank">Levy, Hubbard, McNeil, Swedberg 2015</a> — Sports Engineering<br>
-        Równanie powierzchni lądowania o stałym EFH (Eq. 11), przejścia klotoidalne, limit 1,5 g najazd / 3 g lądowanie,
-        EFH ≤ 1,5 m (Minetti — granica amortyzacji nóg), koncept „build file”.</li>
-      <li>Hubbard 2009 (ASTM STP 1510) · Swedberg 2010 (praca NPS)<br>
-        Ograniczenie prędkości normalnej przy lądowaniu; klotoidalne przejścia najazdowe — podstawy matematyczne.</li>
-      <li>Petrone, Cognolato, McNeil, Hubbard 2017<br>
-        Zbudowany i zmierzony akcelerometrami skok constant-EFH (14 m, lipa 10°, EFH 0,5 m) — walidacja terenowa.</li>
-      <li><a href="https://mtbtrailbuilding.com/calculators/jump-design" target="_blank">MTB Trail Building — kalkulator</a><br>
-        Model lotu: prędkość + kąt → dystans, wysokość, czas, kąt lądowania; lądowanie szersze niż wybicie.</li>
+        Przejście o ograniczonym przeciążeniu (na wjeździe r = v²/14,7 m/s² przy 1,5 g), prosta rampa 0,25 s × prędkość,
+        strata prędkości na podjeździe, zeskok podążający za lotem, kontrola EFH maks. ~4,9 ft (1,5 m).</li>
+      <li><a href="https://www.leelikesbikes.com/formulas-for-building-jumps.html" target="_blank">Lee Likes Bikes — Formulas for building jumps</a><br>
+        Fizyka lotu (kotwica walidacji — zgodność co do 0,1 ft): 45° maks. dystans, 60°+ wysokość,
+        początkujący ~30° i łagodne łuki; 2× prędkość = 4× dystans.</li>
       <li><a href="https://imbacanada.com/building-a-dirt-jump-or-freeride-park/" target="_blank">IMBA Canada</a> ·
-          <a href="https://www.leelikesbikes.com/formulas-for-building-jumps.html" target="_blank">Lee Likes Bikes</a> ·
           <a href="https://www.mtbr.com/threads/dirt-jumps-specs.599573/" target="_blank">mtbr — dirt jump specs</a><br>
-        Realne wymiary: beginner 3 ft / 30°, intermediate 4 ft / 45°, pro 6–7 ft / 60–70°; lądowanie szersze i często wyższe niż lipa.</li>
+        Realne wymiary: beginner 3 ft / 30°, intermediate 4 ft / 45°, pro 6–7 ft / 60–70°; gap 8–12 ft;
+        lądowanie szersze (i często wyższe) niż wybicie — blat ≈ dystans lotu.</li>
+      <li><a href="https://mtbtrailbuilding.com/calculators/jump-design" target="_blank">MTB Trail Building — kalkulator</a><br>
+        Model lotu: prędkość + kąt → dystans, wysokość, czas, kąt lądowania.</li>
+      <li>Metryka EFH (equivalent fall height — „z jakiej wysokości spadasz”)<br>
+        Używana tu tylko jako kontrola bezpieczeństwa lądowania, za Trailism (limit 1,5 m).</li>
     </ul>
   </section>
 </main>
 
-<footer>Model pomija opór powietrza i „pop” (McNeil 2012: dla skoków &lt; 12 m błąd ≤ 10 %). Narzędzie poglądowe — wymiary zawsze zweryfikuj w terenie (łopata &gt; fizyka).</footer>
+<footer>Model pomija opór powietrza i „pop” (dla skoków &lt; 12 m to błąd rzędu ≤ 10 %; technika wybicia jest indywidualna). Narzędzie poglądowe — wymiary zawsze zweryfikuj w terenie (łopata &gt; fizyka).</footer>
 
 <script>
 (function () {
@@ -348,7 +338,7 @@
 
   const el = id => document.getElementById(id);
   const inputs = {
-    speed: el("speed"), angle: el("angle"), efh: el("efh"),
+    speed: el("speed"), angle: el("angle"),
     glimit: el("glimit"), teq: el("teq"),
   };
 
@@ -391,56 +381,42 @@
     return { pts, r: rTop, rEntry, rTop, lip, H, v0, Lramp, tooSlow, transEnd };
   }
 
-  // Zeskok o stałym EFH — Levy et al. 2015, Eq. 11.
-  // Współrzędne względem punktu wybicia (lipy). Całkowanie w przód od knuckla.
-  function buildLanding(v0, th, efh, H, xk) {
-    const tanT = Math.tan(th), cos2T = Math.cos(th) ** 2;
-    const trajY = x => x * tanT - G * x * x / (2 * v0 * v0 * cos2T);
-    const dx = 0.02;
+  // Zeskok prowadzony po paraboli lotu (Trailism: "landing mimics and follows
+  // the parabolic flight path") — zaczyna się kątem θ przy knucklu, stromieje
+  // jak trajektoria i wyokrągla się łukiem u podstawy (limit ~3 g). Dzięki temu
+  // przyziemienie jest niemal styczne (EFH ≈ 0) w całym zakresie prędkości.
+  function buildLanding(v0, th, H, xk) {
+    const tanT = Math.tan(th);
+    const kq = G / (2 * v0 * v0 * Math.cos(th) ** 2);       // krzywizna paraboli lotu
+    const vLand = Math.sqrt(v0 * v0 + 2 * G * H);
+    const rf = Math.min(4, Math.max(1, vLand * vLand / (3 * G))); // wyokrąglenie u podstawy
     const pts = [[xk, 0]];
-    let x = xk, y = 0, mode = "efh", lastThL = -2 * RAD, postSlope = null;
-    let impact = null, impactThL = null;
-    for (let i = 0; i < 8000; i++) {
-      if (mode === "efh" && trajY(x) <= y) {              // przecięcie z torem projektowym
-        impact = { x, y };
-        impactThL = lastThL;
-        mode = "post";
-        postSlope = lastThL;
-      }
-      let thL;
-      if (mode === "efh") {
-        const thJ = Math.atan(2 * y / x - tanT);          // kąt toru lądującego w (x,y)
-        const e = x * x / (4 * (x * tanT - y) * cos2T) - y; // v_J²/2g w tym punkcie
-        const arg = Math.sqrt(efh / Math.max(e, 1e-6));
-        thL = thJ + Math.asin(Math.min(arg, 1));          // Eq. 11
-        thL = Math.min(thL, -2 * RAD);                    // zawsze lekko w dół
-        lastThL = thL;
+    const du = 0.04;
+    let u = 0, x = xk, y = 0, a = th, arc = false, thLBot = th;
+    for (let i = 0; i < 6000; i++) {
+      if (!arc) {
+        u += du;
+        y = -tanT * u - kq * u * u;
+        a = Math.atan(tanT + 2 * kq * u);
+        x = xk + u;
+        if (y <= -H + rf * (1 - Math.cos(a))) { arc = true; thLBot = a; continue; }
+        pts.push([x, y]);
       } else {
-        postSlope = Math.max(-35 * RAD, postSlope - 9 * RAD * dx); // łagodne dostromienie za punktem projektowym
-        thL = Math.min(lastThL, postSlope);
-        lastThL = thL;
+        a -= du / rf;
+        if (a <= 0) break;
+        x += Math.cos(a) * du; y -= Math.sin(a) * du;
+        pts.push([x, Math.max(y, -H)]);
       }
-      y += Math.tan(thL) * dx; x += dx;
-      pts.push([x, y]);
       if (y <= -H) break;
     }
-    // jeśli tor projektowy nie przecina zeskoku (zeskok za krótki) → lądowanie na płaskim
-    let overshoot = false;
-    if (!impact) {
-      overshoot = true;
-      const vy = v0 * Math.sin(th);
-      const tG = (vy + Math.sqrt(vy * vy + 2 * G * H)) / G;
-      impact = { x: v0 * Math.cos(th) * tG, y: -H };
-      impactThL = 0;
-    }
-    return { pts, impact, impactThL, overshoot, endX: pts[pts.length - 1][0] };
+    return { pts, thLTop: th, thLBot, endX: pts[pts.length - 1][0] };
   }
 
   // przyziemienie toru o prędkości v na powierzchni (deck y=0 do xk, potem polilinia zeskoku)
   function impactOnSurface(v, th, surfPts, xk) {
     const tanT = Math.tan(th), cos2T = Math.cos(th) ** 2;
     const sweet = v * v * Math.sin(2 * th) / G;
-    if (sweet <= xk) return { x: sweet, y: 0, onDeck: true, thL: 0 };
+    if (sweet < xk - 0.02) return { x: sweet, y: 0, onDeck: true, thL: 0 };
     for (let i = 1; i < surfPts.length; i++) {
       const [px, py] = surfPts[i];
       const yT = px * tanT - G * px * px / (2 * v * v * cos2T);
@@ -466,18 +442,19 @@
     const vApr = vKmh / 3.6;
     const thetaDeg = +inputs.angle.value;
     const th = thetaDeg * RAD;
-    const efh = +inputs.efh.value;
     const aMaxG = +inputs.glimit.value;
     const tRamp = +inputs.teq.value;
 
     const to = buildTakeoff(vApr, th, aMaxG, tRamp);
     const v0 = to.v0, H = to.H;
 
-    // blat: knuckle na sweet spocie najwolniejszego ridera (65 % prędkości projektowej)
-    const vMin = 0.65 * v0;
-    const xk = Math.max(1.0, vMin * vMin * Math.sin(2 * th) / G);
+    // blat = dystans lotu przy prędkości projektowej (IMBA/mtbr: gap ≈ lot);
+    // rider projektowy przyziemia stycznie tuż za knucklem, wolniejsi lądują
+    // płasko na blacie — po to jest stolik
+    const xSweet = v0 * v0 * Math.sin(2 * th) / G;
+    const xk = Math.max(1.2, xSweet);
 
-    const land = buildLanding(v0, th, efh, H, xk);
+    const land = buildLanding(v0, th, H, xk);
 
     // wachlarz trajektorii
     const family = [0.65, 0.8, 0.9, 1.0].map(f => {
@@ -488,29 +465,21 @@
 
     const tLand = main.imp.x / (v0 * Math.cos(th));
     const hOverDeck = (v0 * Math.sin(th)) ** 2 / (2 * G);
-    const impactEfh = efhAt(th, main.imp.x, main.imp.y, main.imp.thL);
-
-    // samotest: EFH wzdłuż sekcji constant-EFH powinno być = zadane
-    let maxDev = 0;
-    for (let i = 20; i < land.pts.length - 2; i += 40) {
-      const [sx, sy] = land.pts[i];
-      if (land.impact && !land.overshoot && sx > land.impact.x - 0.1) break;
-      const thL = Math.atan((land.pts[i + 1][1] - land.pts[i - 1][1]) / (land.pts[i + 1][0] - land.pts[i - 1][0]));
-      const e = efhAt(th, sx, sy, thL);
-      if (e < efh - 1e-3) continue; // strefa klamry (za mała energia — EFH mniejsze od zadanego = bezpieczniej)
-      maxDev = Math.max(maxDev, Math.abs(e - efh));
-    }
-    console.debug("EFH self-test, max odchyłka [m]:", maxDev.toFixed(3));
+    // EFH jako KONTROLA bezpieczeństwa (Trailism: limit ~4,9 ft / 1,5 m):
+    // 1) przyziemienie projektowe na zeskoku (powinno być ~0, zeskok styczny)
+    const impactEfh = Math.max(0, efhAt(th, main.imp.x, main.imp.y, main.imp.thL));
+    // 2) najgorszy przypadek: skrócenie i lądowanie płasko na blacie
+    const caseEfh = hOverDeck;
+    console.debug("EFH kontrola — zeskok:", impactEfh.toFixed(2), "m · case na blat:", caseEfh.toFixed(2), "m");
 
     return {
-      vKmh, vApr, v0, thetaDeg, th, efh, aMaxG, tRamp,
+      vKmh, vApr, v0, thetaDeg, th, aMaxG, tRamp,
       takeoff: to, H, xk, land, family, main,
       tLand, hOverDeck, hMax: H + hOverDeck,
       flightDist: main.imp.x,
-      impactEfh,
-      landAngleDeg: -main.imp.thL / RAD,
+      impactEfh, caseEfh,
+      landAngleDeg: Math.max(0, -main.imp.thL / RAD),
       caseOnDeck: main.imp.onDeck,
-      overshoot: land.overshoot,
       tooSlow: to.tooSlow,
     };
   }
@@ -567,17 +536,17 @@
   /* ================= KLASYFIKACJA ================= */
 
   function classify(m) {
-    if (m.impactEfh > 1.5)
+    if (m.caseEfh > 1.5)
       return { cls: "booter", icon: "🔴", label: "Ponad limit bezpieczeństwa",
-               note: "EFH przy lądowaniu > 1,5 m przekracza granicę amortyzacji nóg (Minetti / USTPC)" };
-    if (m.thetaDeg <= 30 && m.efh <= 0.6)
+               note: "skrócenie na blat = EFH > 1,5 m — ponad granicę amortyzacji nóg (Trailism: maks. ~4,9 ft)" };
+    if (m.thetaDeg <= 30 && m.caseEfh <= 0.6)
       return { cls: "friendly", icon: "🟢", label: "Łagodny — family friendly",
-               note: "≤30° i miękkie lądowanie: profil dla początkujących (mtbr: beginner ~30°, Lee, IMBA)" };
-    if (m.thetaDeg <= 45 && m.efh <= 1.0)
+               note: "≤30° i bezpieczne skrócenie na blat: profil dla początkujących (mtbr: beginner ~30°, Lee, IMBA)" };
+    if (m.thetaDeg <= 45 && m.caseEfh <= 1.0)
       return { cls: "medium", icon: "🟡", label: "Średni — intermediate",
                note: "do 45° = typowa lipa intermediate (mtbr); 45° daje maks. zasięg (Lee)" };
     return { cls: "booter", icon: "🔴", label: "Booter — dla zaawansowanych",
-             note: "strome wybicie / twarde lądowanie — mtbr: 55–70° to lipy pro" };
+             note: "strome wybicie / wysoki lot — mtbr: 55–70° to lipy pro" };
   }
 
   /* ================= RENDER ================= */
@@ -666,17 +635,12 @@
       "text-anchor": "middle", "font-size": 14, "font-weight": 700, fill: "#c94f3d",
     }, sc.svg).textContent = m.thetaDeg + "°";
 
-    // kąty zeskoku: przy knucklu i u podstawy
-    const lp = m.land.pts;
-    const iT = Math.min(40, lp.length - 2);
-    const aTop = -Math.atan((lp[iT][1] - lp[iT - 1][1]) / (lp[iT][0] - lp[iT - 1][0])) / RAD;
-    const n = lp.length;
-    const aBot = -Math.atan((lp[n - 1][1] - lp[n - 2][1]) / (lp[n - 1][0] - lp[n - 2][0])) / RAD;
+    // kąty zeskoku: przy knucklu (= kąt lotu) i u podstawy (przed wyokrągleniem)
     const midL = lipX + m.xk + (m.land.endX - m.xk) * 0.55;
     svgEl("text", {
       x: sc.X(midL), y: sc.Y(heightAt(world.pts, midL)) - 12,
       "text-anchor": "middle", "font-size": 12.5, "font-weight": 600, fill: "#8a5f33",
-    }, sc.svg).textContent = `pochylenie ${fmt(aTop, 0)}° → ${fmt(aBot, 0)}°`;
+    }, sc.svg).textContent = `pochylenie ${fmt(m.land.thLTop / RAD, 0)}° → ${fmt(m.land.thLBot / RAD, 0)}°`;
 
     // etykieta klotoidy
     const kx = m.takeoff.transEnd.x * 0.55;
@@ -743,9 +707,6 @@
     if (m.caseOnDeck) html +=
       `<div class="badge medium"><span style="font-size:18px">⚠️</span>` +
       `<span>Lądowanie wypada na blacie<small>bezpieczne na stoliku, ale mało płynne — zwiększ prędkość</small></span></div>`;
-    if (m.overshoot) html +=
-      `<div class="badge booter"><span style="font-size:18px">⚠️</span>` +
-      `<span>Przestrzelenie zeskoku<small>tor projektowy ląduje za zeskokiem (EFH ${fmt(m.impactEfh)} m) — zmniejsz EFH albo prędkość</small></span></div>`;
     el("badge").innerHTML = html;
 
     el("r-dist").innerHTML = fmt(m.flightDist) + " <small>m</small>";
@@ -754,6 +715,7 @@
     el("r-time").innerHTML = fmt(m.tLand) + " <small>s</small>";
     el("r-vlip").innerHTML = fmt(m.v0 * 3.6, 1) + " <small>km/h</small>";
     el("r-efh").innerHTML = fmt(Math.min(m.impactEfh, 9.9)) + " <small>m</small>";
+    el("r-case").innerHTML = fmt(m.caseEfh) + " <small>m " + (m.caseEfh > 1.5 ? "⚠️ > limit 1,5" : "(limit 1,5)") + "</small>";
     el("r-langle").innerHTML = fmt(m.landAngleDeg, 0) + "<small>°</small>";
     el("r-lip").innerHTML = fmt(m.H) + " <small>m</small>";
     el("r-table").innerHTML = fmt(m.xk, 1) + " <small>m</small>";
@@ -762,7 +724,6 @@
 
     el("speed-out").innerHTML = m.vKmh + "<small>km/h</small>";
     el("angle-out").innerHTML = m.thetaDeg + "<small>°</small>";
-    el("efh-out").innerHTML = fmt(m.efh, 2) + "<small>m</small>";
     el("glimit-out").innerHTML = fmt(m.aMaxG, 1) + "<small>g</small>";
     el("teq-out").innerHTML = fmt(m.tRamp, 2) + "<small>s</small>";
   }

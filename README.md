@@ -19,10 +19,13 @@ liczy pełną geometrię skoczni i parametry lotu — tak, żeby dało się świ
   poprawiono (patrz `tools/selfeval.js`).*
 - **Strata prędkości na podjeździe**: prędkość na lipie `v₀ = √(v² − 2gH)` — H i v₀ liczone
   iteracyjnie (Trailism: "speed loss to gravity").
-- **Zeskok o stałym EFH**: powierzchnia całkowana numerycznie z równania (11) pracy
-  Levy/Hubbard/McNeil/Swedberg 2015 — każdy rider od 65 % do 100 % prędkości projektowej
-  ląduje z tym samym, zadanym EFH (equivalent fall height). Limit twardy: EFH ≤ 1,5 m
-  (Minetti — granica amortyzacji nóg; norma USTPC).
+- **Blat = dystans lotu** przy prędkości projektowej (IMBA/mtbr: gap ≈ lot) — rider projektowy
+  przyziemia stycznie tuż za knucklem, wolniejsi lądują płasko na blacie (po to jest stolik).
+- **Zeskok prowadzony po paraboli lotu** (Trailism: "landing mimics and follows the parabolic
+  flight path"): zaczyna się kątem lipy przy knucklu, stromieje jak trajektoria, wyokrąglony
+  u podstawy (~3 g). **EFH** (equivalent fall height) liczone jako kontrola bezpieczeństwa:
+  na zeskoku ≈ 0 (stycznie), najgorszy przypadek = skrócenie płasko na blat, z limitem 1,5 m
+  (Trailism: maks. ~4,9 ft).
 - **Lot**: rzut ukośny bez oporu powietrza i bez "popu" (McNeil 2012: dla skoków < 12 m
   błąd ≤ 10 %). Rysowany wachlarz 4 trajektorii (65/80/90/100 %).
 - **Build file**: tabela tyczenia co 0,5 m + kubatura — koncept wprost z Levy 2015 §3.
@@ -30,14 +33,15 @@ liczy pełną geometrię skoczni i parametry lotu — tak, żeby dało się świ
 ## Źródła
 
 - [Trailism — Jump Design](https://trailism.com/jump-design/) — **wzorzec**: klotoidy, r = v²/14,7, rampa 0,25 s, EFH ≤ 4,9 ft
-- Levy D., Hubbard M., McNeil J.A., Swedberg A., *A design rationale for safer terrain park jumps that limit equivalent fall height*, Sports Engineering 18 (2015), [DOI 10.1007/s12283-015-0182-6](https://doi.org/10.1007/s12283-015-0182-6)
-- Hubbard M., *Safer Ski Jump Landing Surface Design Limits Normal Impact Velocity*, ASTM STP 1510 (2009)
-- Swedberg A., *Safer Ski Jumps: Design of Landing Surfaces and Clothoidal In-Run Transitions*, praca magisterska NPS (2010)
-- Petrone N., Cognolato M., McNeil J.A., Hubbard M., *Designing, Building, Measuring and Testing a Constant Equivalent Fall Height Terrain Park Jump* (2017)
 - [MTB Trail Building — kalkulator skoczni](https://mtbtrailbuilding.com/calculators/jump-design)
 - [IMBA Canada — Building a Dirt Jump / Freeride Park](https://imbacanada.com/building-a-dirt-jump-or-freeride-park/)
 - [Lee Likes Bikes — Formulas for building jumps](https://www.leelikesbikes.com/formulas-for-building-jumps.html)
 - [mtbr — dirt jumps specs](https://www.mtbr.com/threads/dirt-jumps-specs.599573/) — realne wymiary lip wg poziomu
+
+Metryka EFH (equivalent fall height) używana jako kontrola bezpieczeństwa lądowania — za Trailism
+(limit 1,5 m / 4,9 ft). Literatura narciarska (Hubbard/Levy/McNeil) świadomie pominięta jako źródło
+geometrii: jej wzory zakładają stałą prędkość na przejściu, co dla roweru wjeżdżającego z płaskiego
+zawyżało najazd ~2× (szczegóły: `tools/selfeval.js`).
 
 ## Weryfikacja modelu
 
