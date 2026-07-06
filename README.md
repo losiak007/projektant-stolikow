@@ -5,7 +5,7 @@ Ustawiasz **prędkość najazdu**, **kąt wybicia** i **miękkość lądowania (
 liczy pełną geometrię skoczni i parametry lotu — tak, żeby dało się świadomie projektować
 łagodne, family-friendly stoliki i przekazać wymiary prosto koparce.
 
-**Live:** https://stoliki.byss.pl (oraz https://stoliki.pages.dev)
+**Live:** https://stoliki.pages.dev
 
 ## Model fizyczny
 
